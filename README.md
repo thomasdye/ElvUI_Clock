@@ -1,2 +1,2 @@
-# elvui_clock
+# ElvUI Clock
 A simple but useful clock for ElvUI
