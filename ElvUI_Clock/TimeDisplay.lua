@@ -11,7 +11,25 @@ print("ElvUI initialized:", E, C, L, DB)
 -- Get the class color
 local classColor = E:ClassColor(E.myclass, true)
 
--- Create the frame
+-- Initialize saved variables
+if not TimeDisplayConfig then
+    TimeDisplayConfig = {}
+end
+
+if TimeDisplayConfig.use24Hour == nil then
+    TimeDisplayConfig.use24Hour = false  -- Default to 12-hour format
+end
+
+-- Function to get the time format
+local function GetTimeFormat()
+    if TimeDisplayConfig.use24Hour then
+        return "%H:%M %p"
+    else
+        return "%I:%M %p"
+    end
+end
+
+-- Create the main frame
 local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
 frame:SetSize(75, 25)  -- Slightly smaller size
 frame:SetPoint("CENTER")
@@ -47,18 +65,18 @@ topBorder:SetColorTexture(classColor.r, classColor.g, classColor.b, 0.8) -- Set 
 local text = frame:CreateFontString(nil, "OVERLAY")
 text:SetPoint("CENTER")
 text:FontTemplate(nil, 12, "OUTLINE")  -- Slightly smaller font size
-text:SetText(date("%I:%M %p"))
+text:SetText(date(GetTimeFormat()))
 
 -- Update the time every second
 frame:SetScript("OnUpdate", function(self, elapsed)
     self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
     if self.timeSinceLastUpdate >= 1 then
-        text:SetText(date("%I:%M %p"))
+        text:SetText(date(GetTimeFormat()))
         self.timeSinceLastUpdate = 0
     end
 end)
 
--- Right-click to open the stopwatch, left-click to open/close the calendar
+-- Right-click to open the stopwatch, left-click to open/close the calendar, shift+right-click to toggle time format
 frame:SetScript("OnMouseDown", function(self, button)
     if button == "LeftButton" then
         isDragging = false
@@ -73,18 +91,22 @@ frame:SetScript("OnMouseUp", function(self, button)
         if Calendar_Toggle then
             Calendar_Toggle()
         end
+    elseif button == "RightButton" and IsShiftKeyDown() then
+        TimeDisplayConfig.use24Hour = not TimeDisplayConfig.use24Hour  -- Toggle the time format
+        text:SetText(date(GetTimeFormat()))  -- Update the time display immediately
     elseif button == "RightButton" then
         Stopwatch_Toggle()
     end
 end)
 
--- Show tooltip on mouseover
+-- Show tooltip on mouseover, centered at the top
 frame:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
-    
+    GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)  -- Center at the top with 10 pixels offset down
     GameTooltip:AddLine("Time Display")
     GameTooltip:AddLine("Left-click: Open/Close Calendar", 1, 1, 1)
     GameTooltip:AddLine("Right-click: Open/Close Stopwatch", 1, 1, 1)
+    GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
     GameTooltip:Show()
 end)
 
