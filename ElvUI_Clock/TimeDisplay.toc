@@ -1,5 +1,6 @@
 ## Interface: 40400
 ## Title: ElvUI_Clock
+## Author: Casualty
 ## Notes: Displays the current time in a movable and resizable window with ElvUI styling.
 ## SavedVariables: TimeDisplayConfig
 ## RequiredDeps: ElvUI
