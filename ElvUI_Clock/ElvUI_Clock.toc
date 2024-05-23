@@ -2,7 +2,7 @@
 ## Title: ElvUI_Clock
 ## Author: Casualty
 ## Notes: Displays the current time in a movable and resizable window with ElvUI stylingdsadsadas.
-## SavedVariables: Use24HourTime, BorderPosition, FramePosition, SettingsFramePosition
+## SavedVariables: Use24HourTime, BorderPosition, FramePosition, SettingsFramePosition, ColorChoice
 ## SavedVariablesPerCharacter: CharacterDB
 ## RequiredDeps: ElvUI
 ElvUI_Clock.lua
