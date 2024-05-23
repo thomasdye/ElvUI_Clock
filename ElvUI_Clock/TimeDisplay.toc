@@ -2,6 +2,7 @@
 ## Title: ElvUI_Clock
 ## Author: Casualty
 ## Notes: Displays the current time in a movable and resizable window with ElvUI styling.
-## SavedVariables: TimeDisplayConfig
+## SavedVariables: Use24HourTime, BorderPosition
+## SavedVariablesPerCharacter: CharacterDB
 ## RequiredDeps: ElvUI
 TimeDisplay.lua
