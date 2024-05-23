@@ -25,8 +25,15 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
     frame:SetSize(75, 25)  -- Slightly smaller size
-    frame:SetPoint("CENTER")
     frame:SetTemplate("Transparent")
+
+    -- Set the frame position from saved variables
+    if FramePosition then
+        frame:SetPoint(FramePosition.point, FramePosition.relativeTo, FramePosition.relativePoint, FramePosition.xOfs, FramePosition.yOfs)
+    else
+        frame:SetPoint("CENTER")
+    end
+
     frame:Show()
 
     -- Enable dragging
@@ -45,6 +52,10 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     frame:SetScript("OnDragStop", function(self)
         isDragging = false
         self:StopMovingOrSizing()
+
+        -- Save the new position
+        local point, relativeTo, relativePoint, xOfs, yOfs = self:GetPoint()
+        FramePosition = { point = point, relativeTo = relativeTo and relativeTo:GetName() or "UIParent", relativePoint = relativePoint, xOfs = xOfs, yOfs = yOfs }
     end)
 
     -- Create the top border texture
@@ -166,5 +177,9 @@ function TimeDisplayAddon:SetDefaults()
     if BorderPosition == nil then
         print('setting border position to top')
         BorderPosition = "TOP"  -- Default border position
+    end
+
+    if FramePosition == nil then
+        FramePosition = { point = "CENTER", relativeTo = "UIParent", relativePoint = "CENTER", xOfs = 0, yOfs = 0 }
     end
 end
