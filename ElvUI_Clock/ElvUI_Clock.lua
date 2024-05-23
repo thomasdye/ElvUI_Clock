@@ -64,6 +64,18 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     local function UpdateBorderColor()
         if ColorChoice == "Class Color" then
             windowBorder:SetColorTexture(classColor.r, classColor.g, classColor.b, 0.8)
+        elseif ColorChoice == "Blue" then
+            windowBorder:SetColorTexture(0, 0, 1, 0.8)
+        elseif ColorChoice == "Red" then
+            windowBorder:SetColorTexture(1, 0, 0, 0.8)
+        elseif ColorChoice == "Green" then
+            windowBorder:SetColorTexture(0, 1, 0, 0.8)
+        elseif ColorChoice == "Pink" then
+            windowBorder:SetColorTexture(1, 0, 1, 0.8)
+        elseif ColorChoice == "Cyan" then
+            windowBorder:SetColorTexture(0, 1, 1, 0.8)
+        elseif ColorChoice == "Yellow" then
+            windowBorder:SetColorTexture(1, 1, 0, 0.8)
         else
             windowBorder:SetColorTexture(0, 0, 0, 0)  -- Make it transparent
         end
@@ -170,9 +182,19 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         -- Create top border for settings frame
         local settingsBorder = settingsFrame:CreateTexture(nil, "OVERLAY")
         settingsBorder:SetHeight(3)
-        settingsBorder:SetColorTexture(classColor.r, classColor.g, classColor.b, 0.8)
         settingsBorder:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT")
         settingsBorder:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT")
+
+        -- Function to update the settings border color
+        local function UpdateSettingsBorderColor()
+            if ColorChoice == "Class Color" then
+                settingsBorder:SetColorTexture(classColor.r, classColor.g, classColor.b, 0.8)
+            else
+                settingsBorder:SetColorTexture(0, 0, 0, 0)  -- Make it transparent
+            end
+        end
+
+        UpdateSettingsBorderColor()
 
         -- Create title for settings frame
         local title = settingsFrame:CreateFontString(nil, "OVERLAY")
@@ -248,11 +270,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
             ColorChoice = self.value
             UpdateBorderColor()
+            UpdateSettingsBorderColor()
         end
 
         local function InitializeColorDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local colors = {"Class Color", "None"}
+            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "None"}
 
             for k, v in pairs(colors) do
                 info = UIDropDownMenu_CreateInfo()
@@ -271,7 +294,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(colorDropdown, "LEFT")
 
         -- Set the selected value based on current ColorChoice
-        local colors = {"Class Color", "None"}
+        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "None"}
         for i, color in ipairs(colors) do
             if color == ColorChoice then
                 UIDropDownMenu_SetSelectedID(colorDropdown, i)
