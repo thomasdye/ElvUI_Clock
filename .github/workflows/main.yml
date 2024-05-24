@@ -58,7 +58,6 @@ jobs:
         tag_name: ${{ env.PR_TAG }}
         release_name: ${{ env.PR_TAG }}
         draft: true
-        target_commitish: release
-        generate_release_notes: true
+        commitish: release
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
