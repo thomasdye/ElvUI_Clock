@@ -1,0 +1,32 @@
+name: PR Version Name Check from dev -> release
+
+on:
+  pull_request:
+    branches:
+      - release
+    types: [opened, edited]
+
+jobs:
+  check-pr-name:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check if PR is from dev to release
+      id: check-branches
+      run: |
+        if [[ "${{ github.event.pull_request.base.ref }}" == "release" && "${{ github.event.pull_request.head.ref }}" == "dev" ]]; then
+          echo "branches_matched=true" >> $GITHUB_ENV
+        else
+          echo "branches_matched=false" >> $GITHUB_ENV
+        fi
+
+    - name: Validate PR name
+      if: env.branches_matched == 'true'
+      run: |
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        if [[ ! "$PR_TITLE" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Error: PR title does not match the required pattern."
+          exit 1
+        else
+          echo "PR title is valid."
+        fi
