@@ -51,6 +51,14 @@ jobs:
           exit 1
         fi
 
+    - name: Generate Release Notes
+      id: generate_release_notes
+      run: |
+        echo "Generating release notes for version ${{ env.PR_TAG }}" > release_notes.md
+        echo "" >> release_notes.md
+        echo "## Changes" >> release_notes.md
+        echo "- Include any notable changes here." >> release_notes.md
+
     - name: Create Draft Release
       id: create_release
       uses: actions/create-release@v1
@@ -58,7 +66,7 @@ jobs:
         tag_name: ${{ env.PR_TAG }}
         release_name: ${{ env.PR_TAG }}
         draft: true
-        target_commitish: release
-        generate_release_notes: true
+        commitish: release
+        body_path: ./release_notes.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
