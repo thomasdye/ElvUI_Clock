@@ -23,7 +23,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
-    frame:SetSize(75, 25)  -- Slightly smaller size
+    frame:SetSize(WindowWidth or 75, 25)  -- Use WindowWidth for the width
     frame:SetTemplate("Transparent")
 
     -- Set the frame position from saved variables
@@ -145,7 +145,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
         local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        settingsFrame:SetSize(250, 250)
+        settingsFrame:SetSize(250, 300)  -- Adjust size to accommodate the slider
         settingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -407,6 +407,23 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         rightClickDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
         rightClickDropdownLabel:SetText("Right Click")
 
+        -- Create slider for Window Width
+        local slider = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
+        slider:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -230)
+        slider:SetMinMaxValues(75, 200)
+        slider:SetValueStep(1)
+        slider:SetValue(WindowWidth)
+        slider:SetScript("OnValueChanged", function(self, value)
+            WindowWidth = value
+            frame:SetWidth(value)  -- Adjust the frame width
+        end)
+
+        -- Create text label for slider
+        local sliderLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        sliderLabel:SetPoint("LEFT", slider, "RIGHT", 10, 0)
+        sliderLabel:FontTemplate(nil, 12, "OUTLINE")
+        sliderLabel:SetText("Window Width")
+
         settingsFrame:Show()
     end
 
@@ -547,5 +564,10 @@ function TimeDisplayAddon:SetDefaults()
     if RightClickFunctionality == nil then
         print('setting right click functionality to stopwatch')
         RightClickFunctionality = "Stopwatch"
+    end
+
+    if WindowWidth == nil then
+        print('setting window width to 75')
+        WindowWidth = 75  -- Default window width
     end
 end
