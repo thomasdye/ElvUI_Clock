@@ -1,13 +1,14 @@
-name: PR Version Name Check from dev -> release
+name: Main Workflow
 
 on:
   pull_request:
     branches:
       - release
-    types: [opened, edited]
+    types: [opened, edited, closed]
 
 jobs:
   check-pr-name:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
 
     steps:
@@ -30,3 +31,34 @@ jobs:
         else
           echo "PR title is valid."
         fi
+
+  create_release:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v3
+
+    - name: Extract PR title and check tag format
+      id: extract_pr_title
+      run: |
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        if [[ "$PR_TITLE" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "PR_TAG=${PR_TITLE}" >> $GITHUB_ENV
+        else
+          echo "Error: PR title does not match the required pattern."
+          exit 1
+        fi
+
+    - name: Create Draft Release
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ env.PR_TAG }}
+        release_name: ${{ env.PR_TAG }}
+        draft: true
+        target_commitish: release
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
