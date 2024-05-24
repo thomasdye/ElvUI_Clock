@@ -23,7 +23,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
-    frame:SetSize(75, 25)  -- Slightly smaller size
+    frame:SetSize(WindowWidth or 75, 25)  -- Use WindowWidth for the width
     frame:SetTemplate("Transparent")
 
     -- Set the frame position from saved variables
@@ -145,7 +145,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
         local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        settingsFrame:SetSize(250, 240)
+        settingsFrame:SetSize(250, 300)  -- Adjust size to accommodate the slider
         settingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -189,6 +189,18 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         local function UpdateSettingsBorderColor()
             if ColorChoice == "Class Color" then
                 settingsBorder:SetColorTexture(classColor.r, classColor.g, classColor.b, 0.8)
+            elseif ColorChoice == "Blue" then
+                settingsBorder:SetColorTexture(0, 0, 1, 0.8)
+            elseif ColorChoice == "Red" then
+                settingsBorder:SetColorTexture(1, 0, 0, 0.8)
+            elseif ColorChoice == "Green" then
+                settingsBorder:SetColorTexture(0, 1, 0, 0.8)
+            elseif ColorChoice == "Pink" then
+                settingsBorder:SetColorTexture(1, 0, 1, 0.8)
+            elseif ColorChoice == "Cyan" then
+                settingsBorder:SetColorTexture(0, 1, 1, 0.8)
+            elseif ColorChoice == "Yellow" then
+                settingsBorder:SetColorTexture(1, 1, 0, 0.8)
             else
                 settingsBorder:SetColorTexture(0, 0, 0, 0)  -- Make it transparent
             end
@@ -200,7 +212,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         local title = settingsFrame:CreateFontString(nil, "OVERLAY")
         title:SetPoint("TOP", settingsFrame, "TOP", 0, -10)
         title:FontTemplate(nil, 14, "OUTLINE")
-        title:SetText("Time Display Settings")
+        title:SetText("ElvUI Clock Settings")
 
         -- Create checkbox for 24 Hour Time
         local checkbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
@@ -308,11 +320,115 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         colorDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
         colorDropdownLabel:SetText("Color")
 
+        -- Create dropdown for Left Click Functionality
+        local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
+        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -150)
+
+        local function OnLeftClickOptionSelected(self)
+            UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
+            LeftClickFunctionality = self.value
+        end
+
+        local function InitializeLeftClickDropdown(self, level)
+            local info = UIDropDownMenu_CreateInfo()
+            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "None"}
+
+            for k, v in pairs(options) do
+                info = UIDropDownMenu_CreateInfo()
+                info.text = v
+                info.value = v
+                info.func = OnLeftClickOptionSelected
+                info.checked = (v == LeftClickFunctionality)
+                UIDropDownMenu_AddButton(info, level)
+            end
+        end
+
+        UIDropDownMenu_Initialize(leftClickDropdown, InitializeLeftClickDropdown)
+        UIDropDownMenu_SetWidth(leftClickDropdown, 100)
+        UIDropDownMenu_SetButtonWidth(leftClickDropdown, 124)
+        UIDropDownMenu_SetSelectedID(leftClickDropdown, 1)
+        UIDropDownMenu_JustifyText(leftClickDropdown, "LEFT")
+
+        -- Set the selected value based on current LeftClickFunctionality
+        local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "None"}
+        for i, option in ipairs(options) do
+            if option == LeftClickFunctionality then
+                UIDropDownMenu_SetSelectedID(leftClickDropdown, i)
+                break
+            end
+        end
+
+        -- Create text label for left click dropdown
+        local leftClickDropdownLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        leftClickDropdownLabel:SetPoint("LEFT", leftClickDropdown, "RIGHT", -7, 0)
+        leftClickDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
+        leftClickDropdownLabel:SetText("Left Click")
+
+        -- Create dropdown for Right Click Functionality
+        local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
+        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -190)
+
+        local function OnRightClickOptionSelected(self)
+            UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
+            RightClickFunctionality = self.value
+        end
+
+        local function InitializeRightClickDropdown(self, level)
+            local info = UIDropDownMenu_CreateInfo()
+            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "None"}
+
+            for k, v in pairs(options) do
+                info = UIDropDownMenu_CreateInfo()
+                info.text = v
+                info.value = v
+                info.func = OnRightClickOptionSelected
+                info.checked = (v == RightClickFunctionality)
+                UIDropDownMenu_AddButton(info, level)
+            end
+        end
+
+        UIDropDownMenu_Initialize(rightClickDropdown, InitializeRightClickDropdown)
+        UIDropDownMenu_SetWidth(rightClickDropdown, 100)
+        UIDropDownMenu_SetButtonWidth(rightClickDropdown, 124)
+        UIDropDownMenu_SetSelectedID(rightClickDropdown, 1)
+        UIDropDownMenu_JustifyText(rightClickDropdown, "LEFT")
+
+        -- Set the selected value based on current RightClickFunctionality
+        for i, option in ipairs(options) do
+            if option == RightClickFunctionality then
+                UIDropDownMenu_SetSelectedID(rightClickDropdown, i)
+                break
+            end
+        end
+
+        -- Create text label for right click dropdown
+        local rightClickDropdownLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        rightClickDropdownLabel:SetPoint("LEFT", rightClickDropdown, "RIGHT", -7, 0)
+        rightClickDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
+        rightClickDropdownLabel:SetText("Right Click")
+
+        -- Create slider for Window Width
+        local slider = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
+        slider:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -230)
+        slider:SetMinMaxValues(75, 200)
+        slider:SetValueStep(1)
+        slider:SetValue(WindowWidth)
+        slider:SetScript("OnValueChanged", function(self, value)
+            WindowWidth = value
+            frame:SetWidth(value)  -- Adjust the frame width
+        end)
+
+        -- Create text label for slider
+        local sliderLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        sliderLabel:SetPoint("LEFT", slider, "RIGHT", 10, 0)
+        sliderLabel:FontTemplate(nil, 12, "OUTLINE")
+        sliderLabel:SetText("Window Width")
+
         settingsFrame:Show()
     end
 
-    -- Left-click to open/close the calendar, shift + left-click to toggle border position
-    -- Right-click to open the stopwatch, shift + right-click to toggle time format
+    -- Left-click to perform selected functionality, shift + left-click to toggle border position
+    -- Right-click to perform selected functionality, shift + right-click to toggle time format
     -- Ctrl + left-click to create a settings window
     frame:SetScript("OnMouseDown", function(self, button)
         if button == "LeftButton" then
@@ -327,18 +443,74 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             elseif IsControlKeyDown() then
                 CreateSettingsWindow()
             else
-                if not IsAddOnLoaded("Blizzard_Calendar") then
-                    UIParentLoadAddOn("Blizzard_Calendar")
-                end
-                if Calendar_Toggle then
-                    Calendar_Toggle()
+                if LeftClickFunctionality == "Friends" then
+                    ToggleFriendsFrame(1)
+                elseif LeftClickFunctionality == "Character" then
+                    ToggleCharacter("PaperDollFrame")
+                elseif LeftClickFunctionality == "Spellbook" then
+                    ToggleSpellBook(BOOKTYPE_SPELL)
+                elseif LeftClickFunctionality == "Talents" then
+                    ToggleTalentFrame()
+                elseif LeftClickFunctionality == "Achievements" then
+                    ToggleAchievementFrame()
+                elseif LeftClickFunctionality == "Quests" then
+                    ToggleQuestLog()
+                elseif LeftClickFunctionality == "Guild" then
+                    ToggleGuildFrame()
+                elseif LeftClickFunctionality == "Dungeon Finder" then
+                    PVEFrame_ToggleFrame()
+                elseif LeftClickFunctionality == "Raid Finder" then
+                    ToggleRaidFrame()
+                elseif LeftClickFunctionality == "Collections" then
+                    ToggleCollectionsJournal()
+                elseif LeftClickFunctionality == "Shop" then
+                    ToggleStoreUI()
+                elseif LeftClickFunctionality == "Stopwatch" then
+                    Stopwatch_Toggle()
+                elseif LeftClickFunctionality == "None" then
+                    -- Do nothing
+                else
+                    if not IsAddOnLoaded("Blizzard_Calendar") then
+                        UIParentLoadAddOn("Blizzard_Calendar")
+                    end
+                    if Calendar_Toggle then
+                        Calendar_Toggle()
+                    end
                 end
             end
-        elseif button == "RightButton" and IsShiftKeyDown() then
-            Use24HourTime = not Use24HourTime  -- Toggle the time format
-            text:SetText(date(GetTimeFormat()))  -- Update the time display immediately
         elseif button == "RightButton" then
-            Stopwatch_Toggle()
+            if IsShiftKeyDown() then
+                Use24HourTime = not Use24HourTime  -- Toggle the time format
+                text:SetText(date(GetTimeFormat()))  -- Update the time display immediately
+            else
+                if RightClickFunctionality == "Friends" then
+                    ToggleFriendsFrame(1)
+                elseif RightClickFunctionality == "Character" then
+                    ToggleCharacter("PaperDollFrame")
+                elseif RightClickFunctionality == "Spellbook" then
+                    ToggleSpellBook(BOOKTYPE_SPELL)
+                elseif RightClickFunctionality == "Talents" then
+                    ToggleTalentFrame()
+                elseif RightClickFunctionality == "Achievements" then
+                    ToggleAchievementFrame()
+                elseif RightClickFunctionality == "Quests" then
+                    ToggleQuestLog()
+                elseif RightClickFunctionality == "Guild" then
+                    ToggleGuildFrame()
+                elseif RightClickFunctionality == "Dungeon Finder" then
+                    PVEFrame_ToggleFrame()
+                elseif RightClickFunctionality == "Raid Finder" then
+                    ToggleRaidFrame()
+                elseif RightClickFunctionality == "Collections" then
+                    ToggleCollectionsJournal()
+                elseif RightClickFunctionality == "Shop" then
+                    ToggleStoreUI()
+                elseif RightClickFunctionality == "Stopwatch" then
+                    Stopwatch_Toggle()
+                elseif RightClickFunctionality == "None" then
+                    -- Do nothing
+                end
+            end
         end
     end)
 
@@ -347,10 +519,10 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
         GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
         GameTooltip:AddLine("Time Display")
-        GameTooltip:AddLine("Left-click: Open/Close Calendar", 1, 1, 1)
+        GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
         GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
         GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
-        GameTooltip:AddLine("Right-click: Open/Close Stopwatch", 1, 1, 1)
+        GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
         GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
         GameTooltip:Show()
     end)
@@ -382,5 +554,20 @@ function TimeDisplayAddon:SetDefaults()
     if ColorChoice == nil then
         print('setting color choice to class color')
         ColorChoice = "Class Color"
+    end
+
+    if LeftClickFunctionality == nil then
+        print('setting left click functionality to calendar')
+        LeftClickFunctionality = "Calendar"
+    end
+
+    if RightClickFunctionality == nil then
+        print('setting right click functionality to stopwatch')
+        RightClickFunctionality = "Stopwatch"
+    end
+
+    if WindowWidth == nil then
+        print('setting window width to 75')
+        WindowWidth = 75  -- Default window width
     end
 end
