@@ -2,10 +2,14 @@ TimeDisplayAddon = {}
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
+frame:RegisterEvent("PLAYER_REGEN_DISABLED")  -- Register event for entering combat
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")   -- Register event for exiting combat
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
 end)
+
+local inCombat = false  -- Track combat state
 
 function TimeDisplayAddon:PLAYER_LOGIN()
     self:SetDefaults()
@@ -229,9 +233,23 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         checkboxLabel:FontTemplate(nil, 12, "OUTLINE")
         checkboxLabel:SetText("24 Hour")
 
+        -- Create checkbox for Combat Warning
+        local combatCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
+        combatCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -70)
+        combatCheckbox:SetChecked(CombatWarning)
+        combatCheckbox:SetScript("OnClick", function(self)
+            CombatWarning = self:GetChecked()
+        end)
+
+        -- Create text label for combat warning checkbox
+        local combatCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        combatCheckboxLabel:SetPoint("LEFT", combatCheckbox, "RIGHT", 5, 0)
+        combatCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        combatCheckboxLabel:SetText("Combat Warning")
+
         -- Create dropdown for Border Position
         local dropdown = CreateFrame("Frame", "BorderPositionDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -70)
+        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -100)
 
         local function OnClick(self)
             UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
@@ -276,7 +294,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -110)
+        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -140)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -322,7 +340,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -150)
+        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -180)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -366,7 +384,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -190)
+        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -220)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -409,7 +427,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local slider = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
-        slider:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -230)
+        slider:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -260)
         slider:SetMinMaxValues(75, 200)
         slider:SetValueStep(1)
         slider:SetValue(WindowWidth)
@@ -514,22 +532,41 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end)
 
-    -- Show tooltip on mouseover, centered at the bottom of clock window frame
+    -- Show tooltip on mouseover centered at the bottom of clock window frame
     frame:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
-        GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
-        GameTooltip:AddLine("Time Display")
-        GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
-        GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
-        GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
-        GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
-        GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
-        GameTooltip:Show()
+        if not (CombatWarning and inCombat) then
+            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
+            GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
+            GameTooltip:AddLine("Time Display")
+            GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
+            GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
+            GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
+            GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
+            GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
+            GameTooltip:Show()
+        end
     end)
 
     frame:SetScript("OnLeave", function(self)
         GameTooltip:Hide()
     end)
+
+    -- Handle combat state changes
+    function TimeDisplayAddon:PLAYER_REGEN_DISABLED()
+        inCombat = true
+        if CombatWarning then
+            -- Player has entered combat, change font color to red
+            text:SetTextColor(1, 0, 0)  -- Red color
+        end
+    end
+
+    function TimeDisplayAddon:PLAYER_REGEN_ENABLED()
+        inCombat = false
+        if CombatWarning then
+            -- Player has exited combat, change font color to white
+            text:SetTextColor(1, 1, 1)  -- White color
+        end
+    end
 end
 
 function TimeDisplayAddon:SetDefaults()
@@ -569,5 +606,9 @@ function TimeDisplayAddon:SetDefaults()
     if WindowWidth == nil then
         print('setting window width to 75')
         WindowWidth = 75  -- Default window width
+    end
+
+    if CombatWarning == nil then
+        CombatWarning = false  -- Default to combat warning off
     end
 end
