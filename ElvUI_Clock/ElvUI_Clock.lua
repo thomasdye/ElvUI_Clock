@@ -4,12 +4,16 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_REGEN_DISABLED")  -- Register event for entering combat
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")   -- Register event for exiting combat
+frame:RegisterEvent("ZONE_CHANGED")           -- Register event for zone change
+frame:RegisterEvent("ZONE_CHANGED_INDOORS")   -- Register event for indoor zone change
+frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")  -- Register event for new area change
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
 end)
 
 local inCombat = false  -- Track combat state
+local playerLocation = ""  -- Variable to store player location
 
 function TimeDisplayAddon:PLAYER_LOGIN()
     self:SetDefaults()
@@ -25,9 +29,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     local classColor = E:ClassColor(E.myclass, true)
 
+    -- Adjust WindowHeight if ShowLocation is true
+    local function GetAdjustedHeight()
+        return WindowHeight + (ShowLocation and 15 or 0)
+    end
+
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
-    frame:SetSize(WindowWidth or 75, WindowHeight or 25)  -- Use WindowWidth and WindowHeight
+    frame:SetSize(WindowWidth or 100, GetAdjustedHeight())  -- Adjusted height to fit time and location
     frame:SetTemplate("Transparent")
 
     -- Set the frame position from saved variables
@@ -129,38 +138,56 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
-    local function GetFontSize()
-        -- Ensure that the font size fits within both dimensions
-        local maxHeightFontSize = WindowHeight / 2
-        local maxWidthFontSize = WindowWidth / 6
-    
-        -- Use the smaller of the two calculated sizes to ensure it fits within the window
-        local fontSize = math.min(maxHeightFontSize, maxWidthFontSize)
-    
-        -- Ensure a minimum font size
-        fontSize = math.max(fontSize, 12)
-    
-        return fontSize
-    end
+    -- Create the text element using ElvUI's FontString function for time
+    local timeTexFontSize = 16
+    local timeText = frame:CreateFontString(nil, "OVERLAY")
+    timeText:SetPoint("TOP", frame, "TOP", 0, -5)
+    timeText:FontTemplate(nil, timeTexFontSize, "OUTLINE")
 
-    -- Create the text element using ElvUI's FontString function
-    local text = frame:CreateFontString(nil, "OVERLAY")
-    text:SetPoint("CENTER")
-    text:FontTemplate(nil, GetFontSize(), "OUTLINE") -- Slightly smaller font size
+    -- Create the text element using ElvUI's FontString function for location
+    local locationTexFontSize = 10
+    local locationText = frame:CreateFontString(nil, "OVERLAY")
+    locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 5)
+    locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
 
     -- Update the time display immediately
-    text:SetText(date(GetTimeFormat()))
+    timeText:SetText(date(GetTimeFormat()))
 
-    -- Update the time every second
+    -- Function to update player location
+    local function UpdateLocation()
+        playerLocation = GetZoneText()
+        locationText:SetText(playerLocation)
+    end
+
+    -- Update the time and location every second
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
-            local fontSizeToUse = GetFontSize()         
-            text:SetText(date(GetTimeFormat()))
-            text:FontTemplate(nil, fontSizeToUse, "OUTLINE")
+            timeText:SetText(date(GetTimeFormat()))
+            timeText:FontTemplate(nil, timeTexFontSize, "OUTLINE")
+            locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
+            locationText:SetShown(ShowLocation)  -- Show or hide location text based on the setting
             self.timeSinceLastUpdate = 0
         end
     end)
+
+    -- Update location when the player changes zones
+    function TimeDisplayAddon:ZONE_CHANGED()
+        UpdateLocation()
+    end
+
+    function TimeDisplayAddon:ZONE_CHANGED_INDOORS()
+        UpdateLocation()
+    end
+
+    function TimeDisplayAddon:ZONE_CHANGED_NEW_AREA()
+        UpdateLocation()
+    end
+
+    -- Function to update the frame size based on ShowLocation
+    local function UpdateFrameSize()
+        frame:SetHeight(WindowHeight + (ShowLocation and 30 or 0))
+    end
 
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
@@ -172,7 +199,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        settingsFrame:SetSize(250, 350)  -- Adjust size to accommodate the slider
+        settingsFrame:SetSize(250, 380)  -- Adjust size to accommodate the slider
         settingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -248,7 +275,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         checkbox:SetChecked(Use24HourTime)
         checkbox:SetScript("OnClick", function(self)
             Use24HourTime = self:GetChecked()
-            text:SetText(date(GetTimeFormat()))  -- Update the time display immediately
+            timeText:SetText(date(GetTimeFormat()))  -- Update the time display immediately
         end)
 
         -- Create text label for checkbox
@@ -271,9 +298,24 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         combatCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         combatCheckboxLabel:SetText("Combat Warning")
 
+        -- Create checkbox for Show Location
+        local locationCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
+        locationCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -100)
+        locationCheckbox:SetChecked(ShowLocation)
+        locationCheckbox:SetScript("OnClick", function(self)
+            ShowLocation = self:GetChecked()
+            UpdateFrameSize()  -- Update frame size when Show Location is toggled
+        end)
+
+        -- Create text label for show location checkbox
+        local locationCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        locationCheckboxLabel:SetPoint("LEFT", locationCheckbox, "RIGHT", 5, 0)
+        locationCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        locationCheckboxLabel:SetText("Show Location")
+
         -- Create dropdown for Border Position
         local dropdown = CreateFrame("Frame", "BorderPositionDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -100)
+        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -130)
 
         local function OnClick(self)
             UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
@@ -318,7 +360,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -140)
+        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -170)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -364,7 +406,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -180)
+        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -210)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -408,7 +450,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -220)
+        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -250)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -451,8 +493,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -260)
-        sliderWidth:SetMinMaxValues(75, 200)
+        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -290)
+        sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
         sliderWidth:SetScript("OnValueChanged", function(self, value)
@@ -468,13 +510,13 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", settingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -290)
+        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -320)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
         sliderHeight:SetScript("OnValueChanged", function(self, value)
             WindowHeight = value
-            frame:SetHeight(value)  -- Adjust the frame height
+            frame:SetHeight(value + (ShowLocation and 30 or 0))  -- Adjust the frame height
         end)
 
         -- Create text label for height slider
@@ -542,7 +584,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         elseif button == "RightButton" then
             if IsShiftKeyDown() then
                 Use24HourTime = not Use24HourTime  -- Toggle the time format
-                text:SetText(date(GetTimeFormat()))  -- Update the time display immediately
+                timeText:SetText(date(GetTimeFormat()))  -- Update the time display immediately
             else
                 if RightClickFunctionality == "Friends" then
                     ToggleFriendsFrame(1)
@@ -599,7 +641,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         inCombat = true
         if CombatWarning then
             -- Player has entered combat, change font color to red
-            text:SetTextColor(1, 0, 0)  -- Red color
+            timeText:SetTextColor(1, 0, 0)  -- Red color
         end
     end
 
@@ -607,9 +649,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         inCombat = false
         if CombatWarning then
             -- Player has exited combat, change font color to white
-            text:SetTextColor(1, 1, 1)  -- White color
+            timeText:SetTextColor(1, 1, 1)  -- White color
         end
     end
+
+    -- Initial location update
+    UpdateLocation()
 end
 
 function TimeDisplayAddon:SetDefaults()
@@ -646,9 +691,9 @@ function TimeDisplayAddon:SetDefaults()
         RightClickFunctionality = "Stopwatch"
     end
 
-    if WindowWidth == nil then
-        print('setting window width to 75')
-        WindowWidth = 75  -- Default window width
+    if WindowWidth == nil or WindowWidth < 100 then
+        print('setting window width to 100')
+        WindowWidth = 100  -- Default window width
     end
 
     if WindowHeight == nil then
@@ -660,7 +705,11 @@ function TimeDisplayAddon:SetDefaults()
         CombatWarning = false  -- Default to combat warning off
     end
 
-    if SettingsWindowOpen == nil then
+    if ShowLocation == nil then
+        ShowLocation = false  -- Default to show location off
+    end
+
+    if SettingsWindowOpen == true then
         SettingsWindowOpen = false  -- Default to settings window closed
     end
 end
