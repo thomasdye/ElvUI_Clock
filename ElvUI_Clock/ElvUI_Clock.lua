@@ -9,6 +9,8 @@ frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
 end)
 
+local inCombat = false  -- Track combat state
+
 function TimeDisplayAddon:PLAYER_LOGIN()
     self:SetDefaults()
 
@@ -532,15 +534,17 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Show tooltip on mouseover centered at the bottom of clock window frame
     frame:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
-        GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
-        GameTooltip:AddLine("Time Display")
-        GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
-        GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
-        GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
-        GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
-        GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
-        GameTooltip:Show()
+        if not (CombatWarning and inCombat) then
+            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
+            GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
+            GameTooltip:AddLine("Time Display")
+            GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
+            GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
+            GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
+            GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
+            GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
+            GameTooltip:Show()
+        end
     end)
 
     frame:SetScript("OnLeave", function(self)
@@ -549,6 +553,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Handle combat state changes
     function TimeDisplayAddon:PLAYER_REGEN_DISABLED()
+        inCombat = true
         if CombatWarning then
             -- Player has entered combat, change font color to red
             text:SetTextColor(1, 0, 0)  -- Red color
@@ -556,6 +561,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     function TimeDisplayAddon:PLAYER_REGEN_ENABLED()
+        inCombat = false
         if CombatWarning then
             -- Player has exited combat, change font color to white
             text:SetTextColor(1, 1, 1)  -- White color
