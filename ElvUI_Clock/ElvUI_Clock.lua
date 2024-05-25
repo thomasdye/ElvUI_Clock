@@ -73,6 +73,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         FramePosition = { point = point, relativeTo = relativeTo and relativeTo:GetName() or "UIParent", relativePoint = relativePoint, xOfs = xOfs, yOfs = yOfs }
     end)
 
+     -- Function to get the version number from the TOC file
+     local function GetAddonVersion()
+        local version = GetAddOnMetadata("ElvUI_Clock", "Version")
+        return version or "Unknown"
+    end
+
     -- Create the top border texture
     local windowBorder = frame:CreateTexture(nil, "OVERLAY")
     windowBorder:SetHeight(3)
@@ -142,7 +148,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     -- Create the text element using ElvUI's FontString function for time
-    local timeTexFontSize = 14
+    local timeTextFontSize = 14
     local timeText = frame:CreateFontString(nil, "OVERLAY")
     timeText:SetPoint("TOP", frame, "TOP", 0, -5)
     timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
@@ -212,6 +218,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
+        
         if SettingsWindowOpen then
             print("Settings window is already open.")
             return
@@ -561,6 +568,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         sliderHeightLabel:FontTemplate(nil, 12, "OUTLINE")
         sliderHeightLabel:SetText("Window Height")
 
+        -- Create text label for version number
+        local versionLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        versionLabel:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 5)
+        versionLabel:FontTemplate(nil, 12, "OUTLINE")
+        versionLabel:SetText("Version: " .. GetAddonVersion())
+        versionLabel:SetTextColor(1, 0.8, 0)
         settingsFrame:Show()
     end
 
@@ -653,6 +666,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end)
 
+    local addonVersion = GetAddonVersion()
+    print("Version:", addonVersion)
     frame:SetScript("OnEnter", function(self)
         if not (CombatWarning and inCombat) then
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
@@ -663,6 +678,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
             GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
+            GameTooltip:AddLine("Version: " .. addonVersion, 1, 0.8, 0)
             if ShowMail and PlayerHasMail then
                 GameTooltip:AddLine("You have mail!", 0, 1, 0)  -- Green color for mail notification
             end
