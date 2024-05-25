@@ -39,12 +39,6 @@ jobs:
     steps:
     - name: Check out the repository
       uses: actions/checkout@v3
-      with:
-        ref: release
-
-    - name: List repository contents
-      run: |
-        ls -R
 
     - name: Extract PR title and check tag format
       id: extract_pr_title
@@ -65,16 +59,6 @@ jobs:
         echo "## Changes" >> release_notes.md
         echo "- Include any notable changes here." >> release_notes.md
 
-    - name: Prepare release files
-      run: |
-        mkdir -p release_files
-        cp -r elvui_clock/ElvUI_Clock/* release_files/
-
-    - name: Create zip file
-      run: |
-        cd release_files
-        zip -r ../ElvUI_Clock_${{ env.PR_TAG }}.zip .
-
     - name: Create Draft Release
       id: create_release
       uses: actions/create-release@v1
@@ -84,15 +68,5 @@ jobs:
         draft: true
         commitish: release
         body_path: ./release_notes.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./ElvUI_Clock_${{ env.PR_TAG }}.zip
-        asset_name: ElvUI_Clock_${{ env.PR_TAG }}.zip
-        asset_content_type: application/zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
