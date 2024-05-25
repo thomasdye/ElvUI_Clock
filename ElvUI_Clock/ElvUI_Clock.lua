@@ -672,7 +672,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         if not (CombatWarning and inCombat) then
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
             GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
-            GameTooltip:AddLine("Time Display")
+            GameTooltip:AddLine("ElvUI Clock")
             GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
             GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
