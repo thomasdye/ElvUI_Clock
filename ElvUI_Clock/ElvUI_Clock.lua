@@ -164,6 +164,13 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
+        if SettingsWindowOpen then
+            print("Settings window is already open.")
+            return
+        end
+
+        SettingsWindowOpen = true
+
         local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
         settingsFrame:SetSize(250, 350)  -- Adjust size to accommodate the slider
         settingsFrame:SetTemplate("Transparent")
@@ -197,6 +204,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         closeButton:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT")
         closeButton:SetScript("OnClick", function()
             settingsFrame:Hide()
+            SettingsWindowOpen = false
         end)
 
         -- Create top border for settings frame
@@ -492,7 +500,9 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             if IsShiftKeyDown() then
                 CycleBorderPosition()
             elseif IsControlKeyDown() then
-                CreateSettingsWindow()
+                if not SettingsWindowOpen then
+                    CreateSettingsWindow()
+                end
             else
                 if LeftClickFunctionality == "Friends" then
                     ToggleFriendsFrame(1)
@@ -648,5 +658,9 @@ function TimeDisplayAddon:SetDefaults()
 
     if CombatWarning == nil then
         CombatWarning = false  -- Default to combat warning off
+    end
+
+    if SettingsWindowOpen == nil then
+        SettingsWindowOpen = false  -- Default to settings window closed
     end
 end
