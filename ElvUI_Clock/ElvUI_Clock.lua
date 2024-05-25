@@ -653,7 +653,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end)
 
-    -- Show tooltip on mouseover centered at the bottom of clock window frame
     frame:SetScript("OnEnter", function(self)
         if not (CombatWarning and inCombat) then
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
@@ -664,6 +663,9 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
             GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
+            if ShowMail and PlayerHasMail then
+                GameTooltip:AddLine("You have mail!", 0, 1, 0)  -- Green color for mail notification
+            end
             GameTooltip:Show()
         end
     end)
