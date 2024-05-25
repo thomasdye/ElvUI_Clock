@@ -42,6 +42,10 @@ jobs:
       with:
         ref: release
 
+    - name: List repository contents
+      run: |
+        ls -R
+
     - name: Extract PR title and check tag format
       id: extract_pr_title
       run: |
@@ -64,7 +68,7 @@ jobs:
     - name: Prepare release files
       run: |
         mkdir -p release_files
-        cp -r /ElvUI_Clock/* release_files/
+        cp -r elvui_clock/ElvUI_Clock/* release_files/
 
     - name: Create zip file
       run: |
