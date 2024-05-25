@@ -142,7 +142,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     -- Create the text element using ElvUI's FontString function for time
-    local timeTextFontSize = 14
+    local timeTexFontSize = 14
     local timeText = frame:CreateFontString(nil, "OVERLAY")
     timeText:SetPoint("TOP", frame, "TOP", 0, -5)
     timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
