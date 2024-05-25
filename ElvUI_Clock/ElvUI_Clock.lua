@@ -130,9 +130,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     local function GetFontSize()
-        print('window height:', WindowHeight)
-        print('window width:', WindowWidth)
-    
         -- Ensure that the font size fits within both dimensions
         local maxHeightFontSize = WindowHeight / 2
         local maxWidthFontSize = WindowWidth / 6
@@ -143,7 +140,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         -- Ensure a minimum font size
         fontSize = math.max(fontSize, 12)
     
-        print("Calculated font size:", fontSize)
         return fontSize
     end
 
