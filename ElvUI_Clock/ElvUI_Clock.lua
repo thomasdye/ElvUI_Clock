@@ -7,6 +7,8 @@ frame:RegisterEvent("PLAYER_REGEN_ENABLED")   -- Register event for exiting comb
 frame:RegisterEvent("ZONE_CHANGED")           -- Register event for zone change
 frame:RegisterEvent("ZONE_CHANGED_INDOORS")   -- Register event for indoor zone change
 frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")  -- Register event for new area change
+frame:RegisterEvent("MAIL_INBOX_UPDATE")      -- Register event for mail inbox update
+frame:RegisterEvent("UPDATE_PENDING_MAIL")    -- Register event for pending mail update
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
@@ -14,6 +16,7 @@ end)
 
 local inCombat = false  -- Track combat state
 local playerLocation = ""  -- Variable to store player location
+local mailIndicatorText = nil  -- Text element for mail indicator
 
 function TimeDisplayAddon:PLAYER_LOGIN()
     self:SetDefaults()
@@ -139,16 +142,24 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     -- Create the text element using ElvUI's FontString function for time
-    local timeTexFontSize = 16
+    local timeTextFontSize = 14
     local timeText = frame:CreateFontString(nil, "OVERLAY")
     timeText:SetPoint("TOP", frame, "TOP", 0, -5)
-    timeText:FontTemplate(nil, timeTexFontSize, "OUTLINE")
+    timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
 
     -- Create the text element using ElvUI's FontString function for location
     local locationTexFontSize = 10
     local locationText = frame:CreateFontString(nil, "OVERLAY")
     locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 5)
     locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
+
+    -- Create the text element for mail indicator
+    mailIndicatorText = frame:CreateFontString(nil, "OVERLAY")
+    mailIndicatorText:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
+    mailIndicatorText:FontTemplate(nil, 10, "OUTLINE")
+    mailIndicatorText:SetText("M")
+    mailIndicatorText:SetTextColor(0.5, 0.5, 1)  -- Light blue color for mail indicator
+    mailIndicatorText:Hide()  -- Initially hidden
 
     -- Update the time display immediately
     timeText:SetText(date(GetTimeFormat()))
@@ -159,14 +170,24 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         locationText:SetText(playerLocation)
     end
 
-    -- Update the time and location every second
+    -- Function to update mail indicator visibility
+    local function UpdateMailIndicator()
+        if ShowMail and PlayerHasMail then
+            mailIndicatorText:Show()
+        else
+            mailIndicatorText:Hide()
+        end
+    end
+
+    -- Update the time, location, and mail indicator every second
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
             timeText:SetText(date(GetTimeFormat()))
-            timeText:FontTemplate(nil, timeTexFontSize, "OUTLINE")
+            timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
             locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
             locationText:SetShown(ShowLocation)  -- Show or hide location text based on the setting
+            UpdateMailIndicator()
             self.timeSinceLastUpdate = 0
         end
     end)
@@ -199,7 +220,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        settingsFrame:SetSize(250, 380)  -- Adjust size to accommodate the slider
+        settingsFrame:SetSize(250, 400)  -- Adjust size to accommodate the new checkbox
         settingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -313,9 +334,24 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         locationCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         locationCheckboxLabel:SetText("Show Location")
 
+        -- Create checkbox for Show Mail
+        local mailCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
+        mailCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -130)
+        mailCheckbox:SetChecked(ShowMail)
+        mailCheckbox:SetScript("OnClick", function(self)
+            ShowMail = self:GetChecked()
+            UpdateMailIndicator()  -- Update mail indicator visibility when Show Mail is toggled
+        end)
+
+        -- Create text label for show mail checkbox
+        local mailCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        mailCheckboxLabel:SetPoint("LEFT", mailCheckbox, "RIGHT", 5, 0)
+        mailCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        mailCheckboxLabel:SetText("Show Mail")
+
         -- Create dropdown for Border Position
         local dropdown = CreateFrame("Frame", "BorderPositionDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -130)
+        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -160)
 
         local function OnClick(self)
             UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
@@ -360,7 +396,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -170)
+        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -200)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -406,7 +442,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -210)
+        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -240)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -450,7 +486,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -250)
+        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -280)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -493,7 +529,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -290)
+        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -320)
         sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
@@ -510,7 +546,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", settingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -320)
+        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -350)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
@@ -653,8 +689,20 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Handle mail events
+    function TimeDisplayAddon:MAIL_INBOX_UPDATE()
+        PlayerHasMail = HasNewMail()
+        UpdateMailIndicator()  -- Update mail indicator visibility
+    end
+
+    function TimeDisplayAddon:UPDATE_PENDING_MAIL()
+        PlayerHasMail = HasNewMail()
+        UpdateMailIndicator()  -- Update mail indicator visibility
+    end
+
     -- Initial location update
     UpdateLocation()
+    UpdateMailIndicator()  -- Initial mail indicator update
 end
 
 function TimeDisplayAddon:SetDefaults()
@@ -707,6 +755,14 @@ function TimeDisplayAddon:SetDefaults()
 
     if ShowLocation == nil then
         ShowLocation = false  -- Default to show location off
+    end
+
+    if ShowMail == nil then
+        ShowMail = false  -- Default to show mail indicator off
+    end
+
+    if PlayerHasMail == nil then
+        PlayerHasMail = false  -- Default to no mail
     end
 
     if SettingsWindowOpen == true then
