@@ -27,7 +27,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
-    frame:SetSize(WindowWidth or 75, 25)  -- Use WindowWidth for the width
+    frame:SetSize(WindowWidth or 75, WindowHeight or 25)  -- Use WindowWidth and WindowHeight
     frame:SetTemplate("Transparent")
 
     -- Set the frame position from saved variables
@@ -129,10 +129,24 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    local function GetFontSize()
+        -- Ensure that the font size fits within both dimensions
+        local maxHeightFontSize = WindowHeight / 2
+        local maxWidthFontSize = WindowWidth / 6
+    
+        -- Use the smaller of the two calculated sizes to ensure it fits within the window
+        local fontSize = math.min(maxHeightFontSize, maxWidthFontSize)
+    
+        -- Ensure a minimum font size
+        fontSize = math.max(fontSize, 12)
+    
+        return fontSize
+    end
+
     -- Create the text element using ElvUI's FontString function
     local text = frame:CreateFontString(nil, "OVERLAY")
     text:SetPoint("CENTER")
-    text:FontTemplate(nil, 12, "OUTLINE")  -- Slightly smaller font size
+    text:FontTemplate(nil, GetFontSize(), "OUTLINE") -- Slightly smaller font size
 
     -- Update the time display immediately
     text:SetText(date(GetTimeFormat()))
@@ -141,7 +155,9 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
+            local fontSizeToUse = GetFontSize()         
             text:SetText(date(GetTimeFormat()))
+            text:FontTemplate(nil, fontSizeToUse, "OUTLINE")
             self.timeSinceLastUpdate = 0
         end
     end)
@@ -149,7 +165,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
         local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        settingsFrame:SetSize(250, 300)  -- Adjust size to accommodate the slider
+        settingsFrame:SetSize(250, 350)  -- Adjust size to accommodate the slider
         settingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -426,21 +442,38 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         rightClickDropdownLabel:SetText("Right Click")
 
         -- Create slider for Window Width
-        local slider = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
-        slider:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -260)
-        slider:SetMinMaxValues(75, 200)
-        slider:SetValueStep(1)
-        slider:SetValue(WindowWidth)
-        slider:SetScript("OnValueChanged", function(self, value)
+        local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
+        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -260)
+        sliderWidth:SetMinMaxValues(75, 200)
+        sliderWidth:SetValueStep(1)
+        sliderWidth:SetValue(WindowWidth)
+        sliderWidth:SetScript("OnValueChanged", function(self, value)
             WindowWidth = value
             frame:SetWidth(value)  -- Adjust the frame width
         end)
 
-        -- Create text label for slider
-        local sliderLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
-        sliderLabel:SetPoint("LEFT", slider, "RIGHT", 10, 0)
-        sliderLabel:FontTemplate(nil, 12, "OUTLINE")
-        sliderLabel:SetText("Window Width")
+        -- Create text label for width slider
+        local sliderWidthLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        sliderWidthLabel:SetPoint("LEFT", sliderWidth, "RIGHT", 10, 0)
+        sliderWidthLabel:FontTemplate(nil, 12, "OUTLINE")
+        sliderWidthLabel:SetText("Window Width")
+
+        -- Create slider for Window Height
+        local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", settingsFrame, "OptionsSliderTemplate")
+        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -290)
+        sliderHeight:SetMinMaxValues(25, 150)
+        sliderHeight:SetValueStep(1)
+        sliderHeight:SetValue(WindowHeight)
+        sliderHeight:SetScript("OnValueChanged", function(self, value)
+            WindowHeight = value
+            frame:SetHeight(value)  -- Adjust the frame height
+        end)
+
+        -- Create text label for height slider
+        local sliderHeightLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        sliderHeightLabel:SetPoint("LEFT", sliderHeight, "RIGHT", 10, 0)
+        sliderHeightLabel:FontTemplate(nil, 12, "OUTLINE")
+        sliderHeightLabel:SetText("Window Height")
 
         settingsFrame:Show()
     end
@@ -606,6 +639,11 @@ function TimeDisplayAddon:SetDefaults()
     if WindowWidth == nil then
         print('setting window width to 75')
         WindowWidth = 75  -- Default window width
+    end
+
+    if WindowHeight == nil then
+        print('setting window height to 25')
+        WindowHeight = 25  -- Default window height
     end
 
     if CombatWarning == nil then
