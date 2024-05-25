@@ -158,7 +158,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     mailIndicatorText:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
     mailIndicatorText:FontTemplate(nil, 10, "OUTLINE")
     mailIndicatorText:SetText("M")
-    mailIndicatorText:SetTextColor(0.5, 0.5, 1)  -- Light blue color for mail indicator
+    mailIndicatorText:SetTextColor(0, 1, 0)  -- Light blue color for mail indicator
     mailIndicatorText:Hide()  -- Initially hidden
 
     -- Update the time display immediately
@@ -347,7 +347,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         local mailCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
         mailCheckboxLabel:SetPoint("LEFT", mailCheckbox, "RIGHT", 5, 0)
         mailCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
-        mailCheckboxLabel:SetText("Show Mail")
+        mailCheckboxLabel:SetText("Show Mail Indicator")
 
         -- Create dropdown for Border Position
         local dropdown = CreateFrame("Frame", "BorderPositionDropdown", settingsFrame, "UIDropDownMenuTemplate")
