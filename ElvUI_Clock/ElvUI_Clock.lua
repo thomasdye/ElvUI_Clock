@@ -51,30 +51,34 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     frame:Show()
 
-    -- Enable dragging
+    -- Enable dragging if WindowLocked is false
     frame:EnableMouse(true)
-    frame:SetMovable(true)
+    frame:SetMovable(not WindowLocked)
     frame:RegisterForDrag("LeftButton")
 
     -- Create a flag to detect dragging
     local isDragging = false
 
     frame:SetScript("OnDragStart", function(self)
-        isDragging = true
-        self:StartMoving()
+        if not WindowLocked then
+            isDragging = true
+            self:StartMoving()
+        end
     end)
 
     frame:SetScript("OnDragStop", function(self)
-        isDragging = false
-        self:StopMovingOrSizing()
+        if not WindowLocked then
+            isDragging = false
+            self:StopMovingOrSizing()
 
-        -- Save the new position
-        local point, relativeTo, relativePoint, xOfs, yOfs = self:GetPoint()
-        FramePosition = { point = point, relativeTo = relativeTo and relativeTo:GetName() or "UIParent", relativePoint = relativePoint, xOfs = xOfs, yOfs = yOfs }
+            -- Save the new position
+            local point, relativeTo, relativePoint, xOfs, yOfs = self:GetPoint()
+            FramePosition = { point = point, relativeTo = relativeTo and relativeTo:GetName() or "UIParent", relativePoint = relativePoint, xOfs = xOfs, yOfs = yOfs }
+        end
     end)
 
-     -- Function to get the version number from the TOC file
-     local function GetAddonVersion()
+    -- Function to get the version number from the TOC file
+    local function GetAddonVersion()
         local version = GetAddOnMetadata("ElvUI_Clock", "Version")
         return version or "Unknown"
     end
@@ -376,9 +380,24 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         mailCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         mailCheckboxLabel:SetText("Show Mail Indicator")
 
+        -- Create checkbox for Window Locked
+        local lockCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
+        lockCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -160)
+        lockCheckbox:SetChecked(WindowLocked)
+        lockCheckbox:SetScript("OnClick", function(self)
+            WindowLocked = self:GetChecked()
+            frame:SetMovable(not WindowLocked)  -- Update frame draggable state immediately
+        end)
+
+        -- Create text label for window locked checkbox
+        local lockCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        lockCheckboxLabel:SetPoint("LEFT", lockCheckbox, "RIGHT", 5, 0)
+        lockCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        lockCheckboxLabel:SetText("Lock Window")
+
         -- Create dropdown for Border Position
         local dropdown = CreateFrame("Frame", "BorderPositionDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -160)
+        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -190)
 
         local function OnClick(self)
             UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
@@ -423,7 +442,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -200)
+        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -230)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -469,7 +488,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -240)
+        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -270)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -513,7 +532,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -280)
+        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -310)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -556,7 +575,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -320)
+        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -350)
         sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
@@ -573,7 +592,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", settingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -350)
+        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -380)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
@@ -805,5 +824,9 @@ function TimeDisplayAddon:SetDefaults()
 
     if SettingsWindowOpen == true then
         SettingsWindowOpen = false  -- Default to settings window closed
+    end
+
+    if WindowLocked == nil then
+        WindowLocked = false  -- Default to window not locked
     end
 end
