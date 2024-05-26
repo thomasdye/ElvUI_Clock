@@ -241,7 +241,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        settingsFrame:SetSize(250, 400)  -- Adjust size to accommodate the new checkbox
+        settingsFrame:SetSize(250, 450)  -- Adjust size to accommodate the new checkbox
         settingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
