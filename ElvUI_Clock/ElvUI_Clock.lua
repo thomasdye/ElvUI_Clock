@@ -98,6 +98,16 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             windowBorder:SetColorTexture(0, 1, 1, 0.8)
         elseif ColorChoice == "Yellow" then
             windowBorder:SetColorTexture(1, 1, 0, 0.8)
+        elseif ColorChoice == "Purple" then
+            windowBorder:SetColorTexture(0.5, 0, 0.5, 0.8)
+        elseif ColorChoice == "Orange" then
+            windowBorder:SetColorTexture(1, 0.5, 0, 0.8)
+        elseif ColorChoice == "Black" then
+            windowBorder:SetColorTexture(0, 0, 0, 0.8)
+        elseif ColorChoice == "Grey" then
+            windowBorder:SetColorTexture(0.5, 0.5, 0.5, 0.8)
+        elseif ColorChoice == "White" then
+            windowBorder:SetColorTexture(1, 1, 1, 0.8)
         else
             windowBorder:SetColorTexture(0, 0, 0, 0)  -- Make it transparent
         end
@@ -284,6 +294,16 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                 settingsBorder:SetColorTexture(0, 1, 1, 0.8)
             elseif ColorChoice == "Yellow" then
                 settingsBorder:SetColorTexture(1, 1, 0, 0.8)
+            elseif ColorChoice == "Purple" then
+                settingsBorder:SetColorTexture(0.5, 0, 0.5, 0.8)
+            elseif ColorChoice == "Orange" then
+                settingsBorder:SetColorTexture(1, 0.5, 0, 0.8)
+            elseif ColorChoice == "Black" then
+                settingsBorder:SetColorTexture(0, 0, 0, 0.8)
+            elseif ColorChoice == "Grey" then
+                settingsBorder:SetColorTexture(0.5, 0.5, 0.5, 0.8)
+            elseif ColorChoice == "White" then
+                settingsBorder:SetColorTexture(1, 1, 1, 0.8)
             else
                 settingsBorder:SetColorTexture(0, 0, 0, 0)  -- Make it transparent
             end
@@ -414,7 +434,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeColorDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "None"}
+            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
 
             for k, v in pairs(colors) do
                 info = UIDropDownMenu_CreateInfo()
@@ -433,7 +453,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(colorDropdown, "LEFT")
 
         -- Set the selected value based on current ColorChoice
-        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "None"}
+        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
         for i, color in ipairs(colors) do
             if color == ColorChoice then
                 UIDropDownMenu_SetSelectedID(colorDropdown, i)
