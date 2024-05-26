@@ -16,7 +16,7 @@ end)
 
 local inCombat = false  -- Track combat state
 local playerLocation = ""  -- Variable to store player location
-local mailIndicatorText = nil  -- Text element for mail indicator
+local mailIndicator = nil  -- Texture element for mail indicator
 
 function TimeDisplayAddon:PLAYER_LOGIN()
     self:SetDefaults()
@@ -173,13 +173,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 5)
     locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
 
-    -- Create the text element for mail indicator
-    mailIndicatorText = frame:CreateFontString(nil, "OVERLAY")
-    mailIndicatorText:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
-    mailIndicatorText:FontTemplate(nil, 10, "OUTLINE")
-    mailIndicatorText:SetText("M")
-    mailIndicatorText:SetTextColor(0, 1, 0)  -- Light blue color for mail indicator
-    mailIndicatorText:Hide()  -- Initially hidden
+    -- Create the texture element for mail indicator
+    mailIndicator = frame:CreateTexture(nil, "OVERLAY")
+    mailIndicator:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
+    mailIndicator:SetSize(16, 16)  -- Set the size of the mail icon
+    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock_Dev\\custom_mail_icon.tga")  -- Use a built-in mail icon
+    mailIndicator:Hide()  -- Initially hidden
 
     -- Update the time display immediately
     timeText:SetText(date(GetTimeFormat()))
@@ -193,9 +192,9 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to update mail indicator visibility
     local function UpdateMailIndicator()
         if ShowMail and PlayerHasMail then
-            mailIndicatorText:Show()
+            mailIndicator:Show()
         else
-            mailIndicatorText:Hide()
+            mailIndicator:Hide()
         end
     end
 
