@@ -41,11 +41,11 @@ jobs:
       if: env.branches_matched == 'true'
       run: |
         # Extract version from dev branch
-        DEV_VERSION=$(git show origin/dev:ElvUI_Clock.toc | grep -E '^## Version' | awk '{print $3}')
+        DEV_VERSION=$(git show origin/dev:ElvUI_Clock/ElvUI_Clock.toc | grep -E '^## Version' | awk '{print $3}')
         echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_ENV
 
         # Extract version from release branch
-        RELEASE_VERSION=$(git show origin/release:ElvUI_Clock.toc | grep -E '^## Version' | awk '{print $3}')
+        RELEASE_VERSION=$(git show origin/release:ElvUI_Clock/ElvUI_Clock.toc | grep -E '^## Version' | awk '{print $3}')
         echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_ENV
 
         # Compare versions
