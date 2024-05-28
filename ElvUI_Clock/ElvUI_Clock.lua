@@ -733,7 +733,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end)
 
     frame:SetScript("OnLeave", function(self)
-        print('hiding tooltip')
         GameTooltip:Hide()
     end)
 
