@@ -34,7 +34,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
-        return WindowHeight + (ShowLocation and 30 or 0)
+        return WindowHeight + (ShowLocation and 45 or 0)
     end
 
     -- Create the main frame
@@ -171,6 +171,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     local locationTexFontSize = 10
     local locationText = frame:CreateFontString(nil, "OVERLAY")
     locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 5)
+    locationText:SetWidth(WindowWidth or 100)  -- Set the width to match the frame width
+    locationText:SetHeight(30)  -- Set a height to allow for multiple lines
     locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
 
     -- Create the texture element for mail indicator
@@ -185,8 +187,21 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to update player location
     local function UpdateLocation()
+        local mapID = C_Map.GetBestMapForUnit("player")
+        if not mapID then
+            locationText:SetText("Unknown Location")
+            return
+        end
+    
+        local position = C_Map.GetPlayerMapPosition(mapID, "player")
+        if not position then
+            locationText:SetText("Unknown Location")
+            return
+        end
+    
+        local x, y = position:GetXY()
         playerLocation = GetZoneText()
-        locationText:SetText(playerLocation)
+        locationText:SetText(string.format("%s\n%.2f, %.2f", playerLocation, x * 100, y * 100))
     end
 
     -- Function to update mail indicator visibility
@@ -226,7 +241,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to update the frame size based on ShowLocation
     local function UpdateFrameSize()
-        frame:SetHeight(WindowHeight + (ShowLocation and 30 or 0))
+        frame:SetHeight(WindowHeight + (ShowLocation and 45 or 0))  -- Adjust height for multiple lines
     end
 
     -- Function to create a new window displaying current settings
@@ -601,7 +616,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         sliderHeight:SetValue(WindowHeight)
         sliderHeight:SetScript("OnValueChanged", function(self, value)
             WindowHeight = value
-            frame:SetHeight(value + (ShowLocation and 30 or 0))  -- Adjust the frame height
+            frame:SetHeight(value + (ShowLocation and 45 or 0))  -- Adjust the frame height
         end)
 
         -- Create text label for height slider
