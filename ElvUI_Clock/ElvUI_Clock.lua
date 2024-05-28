@@ -34,7 +34,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
-        return WindowHeight + (ShowLocation and 15 or 0)
+        return WindowHeight + (ShowLocation and 30 or 0)
     end
 
     -- Create the main frame
