@@ -709,8 +709,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end)
 
     local addonVersion = GetAddonVersion()
-
-    print("Version:", addonVersion)
     frame:SetScript("OnEnter", function(self)
         if not (CombatWarning and inCombat) then
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
