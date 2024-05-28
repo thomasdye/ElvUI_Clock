@@ -231,6 +231,10 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
+
+        if inCombat then
+            return
+        end
         
         if SettingsWindowOpen then
             print("Settings window is already open.")
