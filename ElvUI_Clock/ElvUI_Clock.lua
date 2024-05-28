@@ -231,11 +231,11 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
-
         if inCombat then
+            print("Cannot open settings window while in combat.")
             return
         end
-        
+
         if SettingsWindowOpen then
             print("Settings window is already open.")
             return
@@ -243,27 +243,27 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         SettingsWindowOpen = true
 
-        local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        settingsFrame:SetSize(250, 450)  -- Adjust size to accommodate the new checkbox
-        settingsFrame:SetTemplate("Transparent")
+        SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
+        SettingsFrame:SetSize(250, 450)  -- Adjust size to accommodate the new checkbox
+        SettingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
         if SettingsFramePosition then
-            settingsFrame:SetPoint(SettingsFramePosition.point, SettingsFramePosition.relativeTo, SettingsFramePosition.relativePoint, SettingsFramePosition.xOfs, SettingsFramePosition.yOfs)
+            SettingsFrame:SetPoint(SettingsFramePosition.point, SettingsFramePosition.relativeTo, SettingsFramePosition.relativePoint, SettingsFramePosition.xOfs, SettingsFramePosition.yOfs)
         else
-            settingsFrame:SetPoint("CENTER")
+            SettingsFrame:SetPoint("CENTER")
         end
 
         -- Enable dragging
-        settingsFrame:EnableMouse(true)
-        settingsFrame:SetMovable(true)
-        settingsFrame:RegisterForDrag("LeftButton")
+        SettingsFrame:EnableMouse(true)
+        SettingsFrame:SetMovable(true)
+        SettingsFrame:RegisterForDrag("LeftButton")
 
-        settingsFrame:SetScript("OnDragStart", function(self)
+        SettingsFrame:SetScript("OnDragStart", function(self)
             self:StartMoving()
         end)
 
-        settingsFrame:SetScript("OnDragStop", function(self)
+        SettingsFrame:SetScript("OnDragStop", function(self)
             self:StopMovingOrSizing()
 
             -- Save the new position
@@ -272,18 +272,18 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end)
 
         -- Create close button
-        local closeButton = CreateFrame("Button", nil, settingsFrame, "UIPanelCloseButton")
-        closeButton:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT")
+        local closeButton = CreateFrame("Button", nil, SettingsFrame, "UIPanelCloseButton")
+        closeButton:SetPoint("TOPRIGHT", SettingsFrame, "TOPRIGHT")
         closeButton:SetScript("OnClick", function()
-            settingsFrame:Hide()
+            SettingsFrame:Hide()
             SettingsWindowOpen = false
         end)
 
         -- Create top border for settings frame
-        local settingsBorder = settingsFrame:CreateTexture(nil, "OVERLAY")
+        local settingsBorder = SettingsFrame:CreateTexture(nil, "OVERLAY")
         settingsBorder:SetHeight(3)
-        settingsBorder:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT")
-        settingsBorder:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT")
+        settingsBorder:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT")
+        settingsBorder:SetPoint("TOPRIGHT", SettingsFrame, "TOPRIGHT")
 
         -- Function to update the settings border color
         local function UpdateSettingsBorderColor()
@@ -319,14 +319,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UpdateSettingsBorderColor()
 
         -- Create title for settings frame
-        local title = settingsFrame:CreateFontString(nil, "OVERLAY")
-        title:SetPoint("TOP", settingsFrame, "TOP", 0, -10)
+        local title = SettingsFrame:CreateFontString(nil, "OVERLAY")
+        title:SetPoint("TOP", SettingsFrame, "TOP", 0, -10)
         title:FontTemplate(nil, 14, "OUTLINE")
         title:SetText("ElvUI Clock Settings")
 
         -- Create checkbox for 24 Hour Time
-        local checkbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
-        checkbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -40)
+        local checkbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        checkbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -40)
         checkbox:SetChecked(Use24HourTime)
         checkbox:SetScript("OnClick", function(self)
             Use24HourTime = self:GetChecked()
@@ -334,28 +334,28 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end)
 
         -- Create text label for checkbox
-        local checkboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local checkboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
         checkboxLabel:FontTemplate(nil, 12, "OUTLINE")
         checkboxLabel:SetText("24 Hour")
 
         -- Create checkbox for Combat Warning
-        local combatCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
-        combatCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -70)
+        local combatCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        combatCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -70)
         combatCheckbox:SetChecked(CombatWarning)
         combatCheckbox:SetScript("OnClick", function(self)
             CombatWarning = self:GetChecked()
         end)
 
         -- Create text label for combat warning checkbox
-        local combatCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local combatCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         combatCheckboxLabel:SetPoint("LEFT", combatCheckbox, "RIGHT", 5, 0)
         combatCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         combatCheckboxLabel:SetText("Combat Warning")
 
         -- Create checkbox for Show Location
-        local locationCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
-        locationCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -100)
+        local locationCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        locationCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -100)
         locationCheckbox:SetChecked(ShowLocation)
         locationCheckbox:SetScript("OnClick", function(self)
             ShowLocation = self:GetChecked()
@@ -363,14 +363,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end)
 
         -- Create text label for show location checkbox
-        local locationCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local locationCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         locationCheckboxLabel:SetPoint("LEFT", locationCheckbox, "RIGHT", 5, 0)
         locationCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         locationCheckboxLabel:SetText("Show Location")
 
         -- Create checkbox for Show Mail
-        local mailCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
-        mailCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -130)
+        local mailCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        mailCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -130)
         mailCheckbox:SetChecked(ShowMail)
         mailCheckbox:SetScript("OnClick", function(self)
             ShowMail = self:GetChecked()
@@ -378,14 +378,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end)
 
         -- Create text label for show mail checkbox
-        local mailCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local mailCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         mailCheckboxLabel:SetPoint("LEFT", mailCheckbox, "RIGHT", 5, 0)
         mailCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         mailCheckboxLabel:SetText("Show Mail Indicator")
 
         -- Create checkbox for Window Locked
-        local lockCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
-        lockCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -160)
+        local lockCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        lockCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -160)
         lockCheckbox:SetChecked(WindowLocked)
         lockCheckbox:SetScript("OnClick", function(self)
             WindowLocked = self:GetChecked()
@@ -393,14 +393,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end)
 
         -- Create text label for window locked checkbox
-        local lockCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local lockCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         lockCheckboxLabel:SetPoint("LEFT", lockCheckbox, "RIGHT", 5, 0)
         lockCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         lockCheckboxLabel:SetText("Lock Window")
 
         -- Create dropdown for Border Position
-        local dropdown = CreateFrame("Frame", "BorderPositionDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -190)
+        local dropdown = CreateFrame("Frame", "BorderPositionDropdown", SettingsFrame, "UIDropDownMenuTemplate")
+        dropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -190)
 
         local function OnClick(self)
             UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
@@ -438,14 +438,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
 
         -- Create text label for dropdown
-        local dropdownLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local dropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         dropdownLabel:SetPoint("LEFT", dropdown, "RIGHT", -7, 0)
         dropdownLabel:FontTemplate(nil, 12, "OUTLINE")
         dropdownLabel:SetText("Border")
 
         -- Create dropdown for Color Choice
-        local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -230)
+        local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", SettingsFrame, "UIDropDownMenuTemplate")
+        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -230)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -484,14 +484,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
 
         -- Create text label for color dropdown
-        local colorDropdownLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local colorDropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         colorDropdownLabel:SetPoint("LEFT", colorDropdown, "RIGHT", -7, 0)
         colorDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
         colorDropdownLabel:SetText("Color")
 
         -- Create dropdown for Left Click Functionality
-        local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -270)
+        local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
+        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -270)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -528,14 +528,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
 
         -- Create text label for left click dropdown
-        local leftClickDropdownLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local leftClickDropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         leftClickDropdownLabel:SetPoint("LEFT", leftClickDropdown, "RIGHT", -7, 0)
         leftClickDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
         leftClickDropdownLabel:SetText("Left Click")
 
         -- Create dropdown for Right Click Functionality
-        local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -310)
+        local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
+        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -310)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -571,14 +571,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
 
         -- Create text label for right click dropdown
-        local rightClickDropdownLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local rightClickDropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         rightClickDropdownLabel:SetPoint("LEFT", rightClickDropdown, "RIGHT", -7, 0)
         rightClickDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
         rightClickDropdownLabel:SetText("Right Click")
 
         -- Create slider for Window Width
-        local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -350)
+        local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", SettingsFrame, "OptionsSliderTemplate")
+        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -350)
         sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
@@ -588,14 +588,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end)
 
         -- Create text label for width slider
-        local sliderWidthLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local sliderWidthLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         sliderWidthLabel:SetPoint("LEFT", sliderWidth, "RIGHT", 10, 0)
         sliderWidthLabel:FontTemplate(nil, 12, "OUTLINE")
         sliderWidthLabel:SetText("Window Width")
 
         -- Create slider for Window Height
-        local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", settingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -380)
+        local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", SettingsFrame, "OptionsSliderTemplate")
+        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -380)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
@@ -605,18 +605,18 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end)
 
         -- Create text label for height slider
-        local sliderHeightLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        local sliderHeightLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         sliderHeightLabel:SetPoint("LEFT", sliderHeight, "RIGHT", 10, 0)
         sliderHeightLabel:FontTemplate(nil, 12, "OUTLINE")
         sliderHeightLabel:SetText("Window Height")
 
         -- Create text label for version number
-        local versionLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
-        versionLabel:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 5)
+        local versionLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
+        versionLabel:SetPoint("BOTTOM", SettingsFrame, "BOTTOM", 0, 5)
         versionLabel:FontTemplate(nil, 12, "OUTLINE")
         versionLabel:SetText("Version: " .. GetAddonVersion())
         versionLabel:SetTextColor(1, 0.8, 0)
-        settingsFrame:Show()
+        SettingsFrame:Show()
     end
 
     -- Left-click to perform selected functionality, shift + left-click to toggle border position
@@ -732,12 +732,18 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         GameTooltip:Hide()
     end)
 
+    local wasSettingsWindowOpen = false
     -- Handle combat state changes
     function TimeDisplayAddon:PLAYER_REGEN_DISABLED()
         inCombat = true
         if CombatWarning then
             -- Player has entered combat, change font color to red
             timeText:SetTextColor(1, 0, 0)  -- Red color
+        end
+        if SettingsWindowOpen then
+            wasSettingsWindowOpen = true
+            SettingsFrame:Hide()
+            SettingsWindowOpen = false
         end
     end
 
@@ -746,6 +752,10 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         if CombatWarning then
             -- Player has exited combat, change font color to white
             timeText:SetTextColor(1, 1, 1)  -- White color
+        end
+        if wasSettingsWindowOpen then
+            CreateSettingsWindow()
+            wasSettingsWindowOpen = false
         end
     end
 
