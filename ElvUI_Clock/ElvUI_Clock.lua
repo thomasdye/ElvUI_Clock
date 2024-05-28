@@ -736,7 +736,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         GameTooltip:Hide()
     end)
 
-
     local wasSettingsWindowOpen = false
     -- Handle combat state changes
     function TimeDisplayAddon:PLAYER_REGEN_DISABLED()
