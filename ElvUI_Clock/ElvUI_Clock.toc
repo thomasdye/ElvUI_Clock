@@ -1,7 +1,7 @@
 ## Interface: 40400
 ## Title: ElvUI_Clock
 ## Author: Casualty
-## Version: 1.4.3
+## Version: 1.5.0
 ## Notes: Displays the current time in a movable and resizable window with ElvUI styling.
 ## SavedVariables: Use24HourTime, BorderPosition, FramePosition, SettingsFramePosition, ColorChoice, LeftClickFunctionality, RightClickFunctionality, LeftClickChoice, RightClickChoice, WindowWidth, WindowHeight, CombatWarning, SettingsWindowOpen, ShowLocation, PlayerHasMail, ShowMail, WindowLocked
 ## SavedVariablesPerCharacter: CharacterDB
