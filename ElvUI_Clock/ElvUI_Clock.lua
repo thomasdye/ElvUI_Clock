@@ -79,7 +79,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to get the version number from the TOC file
     local function GetAddonVersion()
-        local version = GetAddOnMetadata("ElvUI_Clock_Dev", "Version")
+        local version = GetAddOnMetadata("ElvUI_Clock", "Version")
         return version or "Unknown"
     end
 
