@@ -709,6 +709,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end)
 
     local addonVersion = GetAddonVersion()
+
     print("Version:", addonVersion)
     frame:SetScript("OnEnter", function(self)
         if not (CombatWarning and inCombat) then
@@ -720,17 +721,22 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
             GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
-            GameTooltip:AddLine("Version: " .. addonVersion, 1, 0.8, 0)
             if ShowMail and PlayerHasMail then
                 GameTooltip:AddLine("You have mail!", 0, 1, 0)  -- Green color for mail notification
             end
+
+            -- Add the version text at the bottom right
+            GameTooltip:AddDoubleLine(" ", "Version: " .. addonVersion, nil, nil, nil, 1, 0.8, 0)
+
             GameTooltip:Show()
         end
     end)
 
     frame:SetScript("OnLeave", function(self)
+        print('hiding tooltip')
         GameTooltip:Hide()
     end)
+
 
     local wasSettingsWindowOpen = false
     -- Handle combat state changes
