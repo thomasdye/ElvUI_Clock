@@ -4,12 +4,19 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_REGEN_DISABLED")  -- Register event for entering combat
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")   -- Register event for exiting combat
+frame:RegisterEvent("ZONE_CHANGED")           -- Register event for zone change
+frame:RegisterEvent("ZONE_CHANGED_INDOORS")   -- Register event for indoor zone change
+frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")  -- Register event for new area change
+frame:RegisterEvent("MAIL_INBOX_UPDATE")      -- Register event for mail inbox update
+frame:RegisterEvent("UPDATE_PENDING_MAIL")    -- Register event for pending mail update
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
 end)
 
 local inCombat = false  -- Track combat state
+local playerLocation = ""  -- Variable to store player location
+local mailIndicator = nil  -- Texture element for mail indicator
 
 function TimeDisplayAddon:PLAYER_LOGIN()
     self:SetDefaults()
@@ -25,9 +32,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     local classColor = E:ClassColor(E.myclass, true)
 
+    -- Adjust WindowHeight if ShowLocation is true
+    local function GetAdjustedHeight()
+        return WindowHeight + (ShowLocation and 15 or 0)
+    end
+
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
-    frame:SetSize(WindowWidth or 75, 25)  -- Use WindowWidth for the width
+    frame:SetSize(WindowWidth or 100, GetAdjustedHeight())  -- Adjusted height to fit time and location
     frame:SetTemplate("Transparent")
 
     -- Set the frame position from saved variables
@@ -39,27 +51,37 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     frame:Show()
 
-    -- Enable dragging
+    -- Enable dragging if WindowLocked is false
     frame:EnableMouse(true)
-    frame:SetMovable(true)
+    frame:SetMovable(not WindowLocked)
     frame:RegisterForDrag("LeftButton")
 
     -- Create a flag to detect dragging
     local isDragging = false
 
     frame:SetScript("OnDragStart", function(self)
-        isDragging = true
-        self:StartMoving()
+        if not WindowLocked then
+            isDragging = true
+            self:StartMoving()
+        end
     end)
 
     frame:SetScript("OnDragStop", function(self)
-        isDragging = false
-        self:StopMovingOrSizing()
+        if not WindowLocked then
+            isDragging = false
+            self:StopMovingOrSizing()
 
-        -- Save the new position
-        local point, relativeTo, relativePoint, xOfs, yOfs = self:GetPoint()
-        FramePosition = { point = point, relativeTo = relativeTo and relativeTo:GetName() or "UIParent", relativePoint = relativePoint, xOfs = xOfs, yOfs = yOfs }
+            -- Save the new position
+            local point, relativeTo, relativePoint, xOfs, yOfs = self:GetPoint()
+            FramePosition = { point = point, relativeTo = relativeTo and relativeTo:GetName() or "UIParent", relativePoint = relativePoint, xOfs = xOfs, yOfs = yOfs }
+        end
     end)
+
+    -- Function to get the version number from the TOC file
+    local function GetAddonVersion()
+        local version = GetAddOnMetadata("ElvUI_Clock", "Version")
+        return version or "Unknown"
+    end
 
     -- Create the top border texture
     local windowBorder = frame:CreateTexture(nil, "OVERLAY")
@@ -80,6 +102,16 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             windowBorder:SetColorTexture(0, 1, 1, 0.8)
         elseif ColorChoice == "Yellow" then
             windowBorder:SetColorTexture(1, 1, 0, 0.8)
+        elseif ColorChoice == "Purple" then
+            windowBorder:SetColorTexture(0.5, 0, 0.5, 0.8)
+        elseif ColorChoice == "Orange" then
+            windowBorder:SetColorTexture(1, 0.5, 0, 0.8)
+        elseif ColorChoice == "Black" then
+            windowBorder:SetColorTexture(0, 0, 0, 0.8)
+        elseif ColorChoice == "Grey" then
+            windowBorder:SetColorTexture(0.5, 0.5, 0.5, 0.8)
+        elseif ColorChoice == "White" then
+            windowBorder:SetColorTexture(1, 1, 1, 0.8)
         else
             windowBorder:SetColorTexture(0, 0, 0, 0)  -- Make it transparent
         end
@@ -129,27 +161,86 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
-    -- Create the text element using ElvUI's FontString function
-    local text = frame:CreateFontString(nil, "OVERLAY")
-    text:SetPoint("CENTER")
-    text:FontTemplate(nil, 12, "OUTLINE")  -- Slightly smaller font size
+    -- Create the text element using ElvUI's FontString function for time
+    local timeTextFontSize = 14
+    local timeText = frame:CreateFontString(nil, "OVERLAY")
+    timeText:SetPoint("TOP", frame, "TOP", 0, -5)
+    timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
+
+    -- Create the text element using ElvUI's FontString function for location
+    local locationTexFontSize = 10
+    local locationText = frame:CreateFontString(nil, "OVERLAY")
+    locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 5)
+    locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
+
+    -- Create the texture element for mail indicator
+    mailIndicator = frame:CreateTexture(nil, "OVERLAY")
+    mailIndicator:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
+    mailIndicator:SetSize(16, 16)  -- Set the size of the mail icon
+    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock_Dev\\custom_mail_icon.tga")  -- Use a built-in mail icon
+    mailIndicator:Hide()  -- Initially hidden
 
     -- Update the time display immediately
-    text:SetText(date(GetTimeFormat()))
+    timeText:SetText(date(GetTimeFormat()))
 
-    -- Update the time every second
+    -- Function to update player location
+    local function UpdateLocation()
+        playerLocation = GetZoneText()
+        locationText:SetText(playerLocation)
+    end
+
+    -- Function to update mail indicator visibility
+    local function UpdateMailIndicator()
+        if ShowMail and PlayerHasMail then
+            mailIndicator:Show()
+        else
+            mailIndicator:Hide()
+        end
+    end
+
+    -- Update the time, location, and mail indicator every second
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
-            text:SetText(date(GetTimeFormat()))
+            timeText:SetText(date(GetTimeFormat()))
+            timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
+            locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
+            locationText:SetShown(ShowLocation)  -- Show or hide location text based on the setting
+            UpdateMailIndicator()
             self.timeSinceLastUpdate = 0
         end
     end)
 
+    -- Update location when the player changes zones
+    function TimeDisplayAddon:ZONE_CHANGED()
+        UpdateLocation()
+    end
+
+    function TimeDisplayAddon:ZONE_CHANGED_INDOORS()
+        UpdateLocation()
+    end
+
+    function TimeDisplayAddon:ZONE_CHANGED_NEW_AREA()
+        UpdateLocation()
+    end
+
+    -- Function to update the frame size based on ShowLocation
+    local function UpdateFrameSize()
+        frame:SetHeight(WindowHeight + (ShowLocation and 30 or 0))
+    end
+
     -- Function to create a new window displaying current settings
     local function CreateSettingsWindow()
+        
+        if SettingsWindowOpen then
+            print("Settings window is already open.")
+            return
+        end
+
+        SettingsWindowOpen = true
+
         local settingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        settingsFrame:SetSize(250, 300)  -- Adjust size to accommodate the slider
+        settingsFrame:SetSize(250, 450)  -- Adjust size to accommodate the new checkbox
         settingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -181,6 +272,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         closeButton:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT")
         closeButton:SetScript("OnClick", function()
             settingsFrame:Hide()
+            SettingsWindowOpen = false
         end)
 
         -- Create top border for settings frame
@@ -205,6 +297,16 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                 settingsBorder:SetColorTexture(0, 1, 1, 0.8)
             elseif ColorChoice == "Yellow" then
                 settingsBorder:SetColorTexture(1, 1, 0, 0.8)
+            elseif ColorChoice == "Purple" then
+                settingsBorder:SetColorTexture(0.5, 0, 0.5, 0.8)
+            elseif ColorChoice == "Orange" then
+                settingsBorder:SetColorTexture(1, 0.5, 0, 0.8)
+            elseif ColorChoice == "Black" then
+                settingsBorder:SetColorTexture(0, 0, 0, 0.8)
+            elseif ColorChoice == "Grey" then
+                settingsBorder:SetColorTexture(0.5, 0.5, 0.5, 0.8)
+            elseif ColorChoice == "White" then
+                settingsBorder:SetColorTexture(1, 1, 1, 0.8)
             else
                 settingsBorder:SetColorTexture(0, 0, 0, 0)  -- Make it transparent
             end
@@ -224,7 +326,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         checkbox:SetChecked(Use24HourTime)
         checkbox:SetScript("OnClick", function(self)
             Use24HourTime = self:GetChecked()
-            text:SetText(date(GetTimeFormat()))  -- Update the time display immediately
+            timeText:SetText(date(GetTimeFormat()))  -- Update the time display immediately
         end)
 
         -- Create text label for checkbox
@@ -247,9 +349,54 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         combatCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         combatCheckboxLabel:SetText("Combat Warning")
 
+        -- Create checkbox for Show Location
+        local locationCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
+        locationCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -100)
+        locationCheckbox:SetChecked(ShowLocation)
+        locationCheckbox:SetScript("OnClick", function(self)
+            ShowLocation = self:GetChecked()
+            UpdateFrameSize()  -- Update frame size when Show Location is toggled
+        end)
+
+        -- Create text label for show location checkbox
+        local locationCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        locationCheckboxLabel:SetPoint("LEFT", locationCheckbox, "RIGHT", 5, 0)
+        locationCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        locationCheckboxLabel:SetText("Show Location")
+
+        -- Create checkbox for Show Mail
+        local mailCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
+        mailCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -130)
+        mailCheckbox:SetChecked(ShowMail)
+        mailCheckbox:SetScript("OnClick", function(self)
+            ShowMail = self:GetChecked()
+            UpdateMailIndicator()  -- Update mail indicator visibility when Show Mail is toggled
+        end)
+
+        -- Create text label for show mail checkbox
+        local mailCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        mailCheckboxLabel:SetPoint("LEFT", mailCheckbox, "RIGHT", 5, 0)
+        mailCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        mailCheckboxLabel:SetText("Show Mail Indicator")
+
+        -- Create checkbox for Window Locked
+        local lockCheckbox = CreateFrame("CheckButton", nil, settingsFrame, "ChatConfigCheckButtonTemplate")
+        lockCheckbox:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -160)
+        lockCheckbox:SetChecked(WindowLocked)
+        lockCheckbox:SetScript("OnClick", function(self)
+            WindowLocked = self:GetChecked()
+            frame:SetMovable(not WindowLocked)  -- Update frame draggable state immediately
+        end)
+
+        -- Create text label for window locked checkbox
+        local lockCheckboxLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        lockCheckboxLabel:SetPoint("LEFT", lockCheckbox, "RIGHT", 5, 0)
+        lockCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        lockCheckboxLabel:SetText("Lock Window")
+
         -- Create dropdown for Border Position
         local dropdown = CreateFrame("Frame", "BorderPositionDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -100)
+        dropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -190)
 
         local function OnClick(self)
             UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
@@ -294,7 +441,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -140)
+        colorDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -230)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -305,7 +452,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeColorDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "None"}
+            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
 
             for k, v in pairs(colors) do
                 info = UIDropDownMenu_CreateInfo()
@@ -324,7 +471,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(colorDropdown, "LEFT")
 
         -- Set the selected value based on current ColorChoice
-        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "None"}
+        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
         for i, color in ipairs(colors) do
             if color == ColorChoice then
                 UIDropDownMenu_SetSelectedID(colorDropdown, i)
@@ -340,7 +487,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -180)
+        leftClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -270)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -384,7 +531,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", settingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -220)
+        rightClickDropdown:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", -9, -310)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -426,22 +573,45 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         rightClickDropdownLabel:SetText("Right Click")
 
         -- Create slider for Window Width
-        local slider = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
-        slider:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -260)
-        slider:SetMinMaxValues(75, 200)
-        slider:SetValueStep(1)
-        slider:SetValue(WindowWidth)
-        slider:SetScript("OnValueChanged", function(self, value)
+        local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", settingsFrame, "OptionsSliderTemplate")
+        sliderWidth:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -350)
+        sliderWidth:SetMinMaxValues(100, 200)
+        sliderWidth:SetValueStep(1)
+        sliderWidth:SetValue(WindowWidth)
+        sliderWidth:SetScript("OnValueChanged", function(self, value)
             WindowWidth = value
             frame:SetWidth(value)  -- Adjust the frame width
         end)
 
-        -- Create text label for slider
-        local sliderLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
-        sliderLabel:SetPoint("LEFT", slider, "RIGHT", 10, 0)
-        sliderLabel:FontTemplate(nil, 12, "OUTLINE")
-        sliderLabel:SetText("Window Width")
+        -- Create text label for width slider
+        local sliderWidthLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        sliderWidthLabel:SetPoint("LEFT", sliderWidth, "RIGHT", 10, 0)
+        sliderWidthLabel:FontTemplate(nil, 12, "OUTLINE")
+        sliderWidthLabel:SetText("Window Width")
 
+        -- Create slider for Window Height
+        local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", settingsFrame, "OptionsSliderTemplate")
+        sliderHeight:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 10, -380)
+        sliderHeight:SetMinMaxValues(25, 150)
+        sliderHeight:SetValueStep(1)
+        sliderHeight:SetValue(WindowHeight)
+        sliderHeight:SetScript("OnValueChanged", function(self, value)
+            WindowHeight = value
+            frame:SetHeight(value + (ShowLocation and 30 or 0))  -- Adjust the frame height
+        end)
+
+        -- Create text label for height slider
+        local sliderHeightLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        sliderHeightLabel:SetPoint("LEFT", sliderHeight, "RIGHT", 10, 0)
+        sliderHeightLabel:FontTemplate(nil, 12, "OUTLINE")
+        sliderHeightLabel:SetText("Window Height")
+
+        -- Create text label for version number
+        local versionLabel = settingsFrame:CreateFontString(nil, "OVERLAY")
+        versionLabel:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 5)
+        versionLabel:FontTemplate(nil, 12, "OUTLINE")
+        versionLabel:SetText("Version: " .. GetAddonVersion())
+        versionLabel:SetTextColor(1, 0.8, 0)
         settingsFrame:Show()
     end
 
@@ -459,7 +629,9 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             if IsShiftKeyDown() then
                 CycleBorderPosition()
             elseif IsControlKeyDown() then
-                CreateSettingsWindow()
+                if not SettingsWindowOpen then
+                    CreateSettingsWindow()
+                end
             else
                 if LeftClickFunctionality == "Friends" then
                     ToggleFriendsFrame(1)
@@ -499,7 +671,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         elseif button == "RightButton" then
             if IsShiftKeyDown() then
                 Use24HourTime = not Use24HourTime  -- Toggle the time format
-                text:SetText(date(GetTimeFormat()))  -- Update the time display immediately
+                timeText:SetText(date(GetTimeFormat()))  -- Update the time display immediately
             else
                 if RightClickFunctionality == "Friends" then
                     ToggleFriendsFrame(1)
@@ -532,17 +704,22 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end)
 
-    -- Show tooltip on mouseover centered at the bottom of clock window frame
+    local addonVersion = GetAddonVersion()
+    print("Version:", addonVersion)
     frame:SetScript("OnEnter", function(self)
         if not (CombatWarning and inCombat) then
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
             GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
-            GameTooltip:AddLine("Time Display")
+            GameTooltip:AddLine("ElvUI Clock")
             GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
             GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
             GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
+            GameTooltip:AddLine("Version: " .. addonVersion, 1, 0.8, 0)
+            if ShowMail and PlayerHasMail then
+                GameTooltip:AddLine("You have mail!", 0, 1, 0)  -- Green color for mail notification
+            end
             GameTooltip:Show()
         end
     end)
@@ -556,7 +733,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         inCombat = true
         if CombatWarning then
             -- Player has entered combat, change font color to red
-            text:SetTextColor(1, 0, 0)  -- Red color
+            timeText:SetTextColor(1, 0, 0)  -- Red color
         end
     end
 
@@ -564,9 +741,24 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         inCombat = false
         if CombatWarning then
             -- Player has exited combat, change font color to white
-            text:SetTextColor(1, 1, 1)  -- White color
+            timeText:SetTextColor(1, 1, 1)  -- White color
         end
     end
+
+    -- Handle mail events
+    function TimeDisplayAddon:MAIL_INBOX_UPDATE()
+        PlayerHasMail = HasNewMail()
+        UpdateMailIndicator()  -- Update mail indicator visibility
+    end
+
+    function TimeDisplayAddon:UPDATE_PENDING_MAIL()
+        PlayerHasMail = HasNewMail()
+        UpdateMailIndicator()  -- Update mail indicator visibility
+    end
+
+    -- Initial location update
+    UpdateLocation()
+    UpdateMailIndicator()  -- Initial mail indicator update
 end
 
 function TimeDisplayAddon:SetDefaults()
@@ -603,12 +795,37 @@ function TimeDisplayAddon:SetDefaults()
         RightClickFunctionality = "Stopwatch"
     end
 
-    if WindowWidth == nil then
-        print('setting window width to 75')
-        WindowWidth = 75  -- Default window width
+    if WindowWidth == nil or WindowWidth < 100 then
+        print('setting window width to 100')
+        WindowWidth = 100  -- Default window width
+    end
+
+    if WindowHeight == nil then
+        print('setting window height to 25')
+        WindowHeight = 25  -- Default window height
     end
 
     if CombatWarning == nil then
         CombatWarning = false  -- Default to combat warning off
+    end
+
+    if ShowLocation == nil then
+        ShowLocation = false  -- Default to show location off
+    end
+
+    if ShowMail == nil then
+        ShowMail = false  -- Default to show mail indicator off
+    end
+
+    if PlayerHasMail == nil then
+        PlayerHasMail = false  -- Default to no mail
+    end
+
+    if SettingsWindowOpen == true then
+        SettingsWindowOpen = false  -- Default to settings window closed
+    end
+
+    if WindowLocked == nil then
+        WindowLocked = false  -- Default to window not locked
     end
 end
