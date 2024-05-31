@@ -205,15 +205,20 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     -- Function to update mail indicator visibility
+    local mailSenders = {}
     local function UpdateMailIndicator()
         if ShowMail and PlayerHasMail then
             mailIndicator:Show()
+            -- Get details of the latest three mail senders
+            mailSenders = { GetLatestThreeSenders() }
         else
             mailIndicator:Hide()
+            mailSenders = {}  -- Clear the senders' names if no mail
         end
     end
 
     -- Update the time, location, and mail indicator every second
+    local frameCounter = 0
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
@@ -223,6 +228,11 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             locationText:SetShown(ShowLocation)  -- Show or hide location text based on the setting
             UpdateMailIndicator()
             self.timeSinceLastUpdate = 0
+        end
+        frameCounter = frameCounter + 1  -- Increment the frame counter
+        if frameCounter >= 60 then  -- Check if 60 frames have passed
+            UpdateLocation()  -- Update the location
+            frameCounter = 0  -- Reset the frame counter
         end
     end)
 
@@ -738,18 +748,29 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
             GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
-            if ShowMail and PlayerHasMail then
-                GameTooltip:AddLine("You have mail!", 0, 1, 0)  -- Green color for mail notification
-            end
-
             -- Add the version text at the bottom right
             GameTooltip:AddDoubleLine(" ", "Version: " .. addonVersion, nil, nil, nil, 1, 0.8, 0)
-
             GameTooltip:Show()
         end
     end)
 
     frame:SetScript("OnLeave", function(self)
+        GameTooltip:Hide()
+    end)
+
+    -- Add sender information to the mail indicator tooltip
+    mailIndicator:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine(HasNewMail() and HAVE_MAIL_FROM or MAIL_LABEL, 1, 1, 1)
+        GameTooltip:AddLine(' ')
+        for _, sender in pairs(mailSenders) do
+            GameTooltip:AddLine(sender)
+        end
+        GameTooltip:Show()
+    end)
+
+    mailIndicator:SetScript("OnLeave", function(self)
         GameTooltip:Hide()
     end)
 
