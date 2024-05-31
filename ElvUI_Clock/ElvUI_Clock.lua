@@ -79,7 +79,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to get the version number from the TOC file
     local function GetAddonVersion()
-        local version = GetAddOnMetadata("ElvUI_Clock", "Version")
+        local version = GetAddOnMetadata("ElvUI_Clock_Dev", "Version")
         return version or "Unknown"
     end
 
@@ -179,7 +179,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     mailIndicator = frame:CreateTexture(nil, "OVERLAY")
     mailIndicator:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
     mailIndicator:SetSize(16, 16)  -- Set the size of the mail icon
-    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock\\custom_mail_icon.tga")  -- Use a built-in mail icon
+    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock_Dev\\custom_mail_icon.tga")  -- Use a built-in mail icon
     mailIndicator:Hide()  -- Initially hidden
 
     -- Update the time display immediately
@@ -748,21 +748,29 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
             GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
-            if ShowMail and PlayerHasMail then
-                GameTooltip:AddLine(HasNewMail() and HAVE_MAIL_FROM or MAIL_LABEL, 0, 1, 0)  -- Green color for mail notification
-                for _, sender in pairs(mailSenders) do
-                    GameTooltip:AddLine(sender)
-                end
-            end
-
             -- Add the version text at the bottom right
             GameTooltip:AddDoubleLine(" ", "Version: " .. addonVersion, nil, nil, nil, 1, 0.8, 0)
-
             GameTooltip:Show()
         end
     end)
 
     frame:SetScript("OnLeave", function(self)
+        GameTooltip:Hide()
+    end)
+
+    -- Add sender information to the mail indicator tooltip
+    mailIndicator:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine(HasNewMail() and HAVE_MAIL_FROM or MAIL_LABEL, 1, 1, 1)
+        GameTooltip:AddLine(' ')
+        for _, sender in pairs(mailSenders) do
+            GameTooltip:AddLine(sender)
+        end
+        GameTooltip:Show()
+    end)
+
+    mailIndicator:SetScript("OnLeave", function(self)
         GameTooltip:Hide()
     end)
 
