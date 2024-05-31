@@ -205,16 +205,20 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     -- Function to update mail indicator visibility
+    local mailSenders = {}
     local function UpdateMailIndicator()
         if ShowMail and PlayerHasMail then
             mailIndicator:Show()
+            -- Get details of the latest three mail senders
+            mailSenders = { GetLatestThreeSenders() }
         else
             mailIndicator:Hide()
+            mailSenders = {}  -- Clear the senders' names if no mail
         end
     end
 
-    local frameCounter = 0
     -- Update the time, location, and mail indicator every second
+    local frameCounter = 0
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
@@ -745,7 +749,10 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
             GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
             if ShowMail and PlayerHasMail then
-                GameTooltip:AddLine("You have mail!", 0, 1, 0)  -- Green color for mail notification
+                GameTooltip:AddLine(HasNewMail() and HAVE_MAIL_FROM or MAIL_LABEL, 0, 1, 0)  -- Green color for mail notification
+                for _, sender in pairs(mailSenders) do
+                    GameTooltip:AddLine(sender)
+                end
             end
 
             -- Add the version text at the bottom right
