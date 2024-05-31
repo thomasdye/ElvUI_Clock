@@ -4,10 +4,6 @@
 [![CurseForge Version](https://img.shields.io/curseforge/v/1023158?style=for-the-badge&logo=curseforge)](https://www.curseforge.com/wow/addons/elvui-clock)
 [![CurseForge Downloads](https://img.shields.io/curseforge/dt/1023158?style=for-the-badge&logo=curseforge)](https://www.curseforge.com/wow/addons/elvui-clock)
 
-
-
-
-
 # ElvUI Clock
 A simple but feature packed clock for ElvUI
 
