@@ -213,6 +213,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    local frameCounter = 0
     -- Update the time, location, and mail indicator every second
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
@@ -223,6 +224,11 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             locationText:SetShown(ShowLocation)  -- Show or hide location text based on the setting
             UpdateMailIndicator()
             self.timeSinceLastUpdate = 0
+        end
+        frameCounter = frameCounter + 1  -- Increment the frame counter
+        if frameCounter >= 60 then  -- Check if 60 frames have passed
+            UpdateLocation()  -- Update the location
+            frameCounter = 0  -- Reset the frame counter
         end
     end)
 
