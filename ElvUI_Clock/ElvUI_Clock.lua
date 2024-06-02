@@ -15,7 +15,6 @@ frame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 local inCombat = false  -- Track combat state
-local playerLocation = ""  -- Variable to store player location
 local mailIndicator = nil  -- Texture element for mail indicator
 
 function TimeDisplayAddon:PLAYER_LOGIN()
@@ -162,34 +161,34 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     -- Set the font sizes for the text elements
-    local dungeonNameFontSize = 12  -- Font size for dungeon name
-    local dungeonDifficultyFontSize = 10  -- Font size for dungeon difficulty
-    local locationTextFontSize = 12 -- Font size for location
-    local coordinatesFontSize = 10  -- Font size for coordinates
-    local timeTextFontSize = 14 -- Font size for time
+    local dungeonNameFontSize = 12
+    local dungeonDifficultyFontSize = 10
+    local locationFontSize = 12
+    local coordinatesFontSize = 10
+    local timeFontSize = 14
 
     local timeText = frame:CreateFontString(nil, "OVERLAY")
     timeText:SetPoint("TOP", frame, "TOP", 0, -5)
-    timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
+    timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
 
     local locationText = frame:CreateFontString(nil, "OVERLAY")
     locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)  -- Adjusted position
     locationText:SetWidth(WindowWidth or 100)  -- Set the width to match the frame width
-    locationText:FontTemplate(nil, locationTextFontSize, "OUTLINE")
+    locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
 
     local coordinatesText = frame:CreateFontString(nil, "OVERLAY")
-    coordinatesText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)  -- Adjusted position
-    coordinatesText:SetWidth((WindowWidth or 100) * 1.5)  -- Increase the width to accommodate more text
+    coordinatesText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
+    coordinatesText:SetWidth((WindowWidth or 100) * 1.5)
     coordinatesText:FontTemplate(nil, coordinatesFontSize, "OUTLINE")
 
     local dungeonNameText = frame:CreateFontString(nil, "OVERLAY")
-    dungeonNameText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)  -- Adjusted position
-    dungeonNameText:SetWidth((WindowWidth or 100) * 1.5)  -- Increase the width to accommodate more text
+    dungeonNameText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)
+    dungeonNameText:SetWidth((WindowWidth or 100) * 1.5)
     dungeonNameText:FontTemplate(nil, dungeonNameFontSize, "OUTLINE")
 
     local dungeonDifficultyText = frame:CreateFontString(nil, "OVERLAY")
-    dungeonDifficultyText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)  -- Adjusted position
-    dungeonDifficultyText:SetWidth((WindowWidth or 100) * 1.5)  -- Increase the width to accommodate more text
+    dungeonDifficultyText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
+    dungeonDifficultyText:SetWidth((WindowWidth or 100) * 1.5)
     dungeonDifficultyText:FontTemplate(nil, dungeonDifficultyFontSize, "OUTLINE")
 
     -- Create the texture element for mail indicator
@@ -232,8 +231,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Check if timeToConvert starts with "0" and remove it if Use24HourTime is false
     local function removeLeadingZero(timeToConvert)
-        -- Check if timeToConvert starts with "0" and remove it
         if Use24HourTime then
             return timeToConvert
         end
@@ -255,8 +254,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     local function UpdateMailIndicator()
         if ShowMail and PlayerHasMail then
             mailIndicator:Show()
-            -- Get details of the latest three mail senders
-            mailSenders = { GetLatestThreeSenders() }
+            mailSenders = { GetLatestThreeSenders() }  -- Get details of the latest three mail senders
         else
             mailIndicator:Hide()
             mailSenders = {}  -- Clear the senders' names if no mail
@@ -269,16 +267,16 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
             timeText:SetText(time)
-            timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
-            locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
-            locationText:SetShown(ShowLocation)  -- Show or hide location text based on the setting
-            coordinatesText:SetShown(ShowLocation) -- Show or hide coordinates text based on the setting
+            timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
+            locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
+            locationText:SetShown(ShowLocation)
+            coordinatesText:SetShown(ShowLocation)
             UpdateMailIndicator()
             self.timeSinceLastUpdate = 0
         end
-        frameCounter = frameCounter + 1  -- Increment the frame counter
+        frameCounter = frameCounter + 1
         if frameCounter >= 60 then  -- Check if 60 frames have passed
-            UpdateLocation()  -- Update the location
+            UpdateLocation()
             frameCounter = 0  -- Reset the frame counter
         end
     end)
@@ -298,7 +296,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to update the frame size based on ShowLocation
     local function UpdateFrameSize()
-        frame:SetHeight(WindowHeight + (ShowLocation and 45 or 0))  -- Adjust height for multiple lines
+        frame:SetHeight(WindowHeight + (ShowLocation and 45 or 0))
     end
 
     -- Function to create a new window displaying current settings
@@ -316,7 +314,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        SettingsFrame:SetSize(250, 450)  -- Adjust size to accommodate the new checkbox
+        SettingsFrame:SetSize(250, 450)
         SettingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -699,7 +697,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Left-click to perform selected functionality, shift + left-click to toggle border position
     -- Right-click to perform selected functionality, shift + right-click to toggle time format
-    -- Ctrl + left-click to create a settings window
+    -- Ctrl + left-click to open the settings window
     frame:SetScript("OnMouseDown", function(self, button)
         if button == "LeftButton" then
             isDragging = false
@@ -801,7 +799,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
             GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
-            -- Add the version text at the bottom right
             GameTooltip:AddDoubleLine(" ", "Version: " .. addonVersion, nil, nil, nil, 1, 0.8, 0)
             GameTooltip:Show()
         end
@@ -833,7 +830,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         inCombat = true
         if CombatWarning then
             -- Player has entered combat, change font color to red
-            timeText:SetTextColor(1, 0, 0)  -- Red color
+            timeText:SetTextColor(1, 0, 0)
         end
         if SettingsWindowOpen then
             wasSettingsWindowOpen = true
@@ -846,7 +843,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         inCombat = false
         if CombatWarning then
             -- Player has exited combat, change font color to white
-            timeText:SetTextColor(1, 1, 1)  -- White color
+            timeText:SetTextColor(1, 1, 1)
         end
         if wasSettingsWindowOpen then
             CreateSettingsWindow()
@@ -857,17 +854,17 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Handle mail events
     function TimeDisplayAddon:MAIL_INBOX_UPDATE()
         PlayerHasMail = HasNewMail()
-        UpdateMailIndicator()  -- Update mail indicator visibility
+        UpdateMailIndicator()
     end
 
     function TimeDisplayAddon:UPDATE_PENDING_MAIL()
         PlayerHasMail = HasNewMail()
-        UpdateMailIndicator()  -- Update mail indicator visibility
+        UpdateMailIndicator()
     end
 
-    -- Initial location update
+    -- Initial location and mail indicator update
     UpdateLocation()
-    UpdateMailIndicator()  -- Initial mail indicator update
+    UpdateMailIndicator() 
 end
 
 function TimeDisplayAddon:SetDefaults()
