@@ -196,7 +196,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     mailIndicator = frame:CreateTexture(nil, "OVERLAY")
     mailIndicator:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
     mailIndicator:SetSize(16, 16)  -- Set the size of the mail icon
-    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock_Dev\\custom_mail_icon.tga")  -- Use a built-in mail icon
+    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock\\custom_mail_icon.tga")  -- Use a built-in mail icon
     mailIndicator:Hide()  -- Initially hidden
 
     -- Function to update player location
