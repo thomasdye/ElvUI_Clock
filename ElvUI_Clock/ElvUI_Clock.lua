@@ -79,7 +79,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to get the version number from the TOC file
     local function GetAddonVersion()
-        local version = GetAddOnMetadata("ElvUI_Clock", "Version")
+        local version = GetAddOnMetadata("ElvUI_Clock_Dev", "Version")
         return version or "Unknown"
     end
 
@@ -196,7 +196,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     mailIndicator = frame:CreateTexture(nil, "OVERLAY")
     mailIndicator:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
     mailIndicator:SetSize(16, 16)  -- Set the size of the mail icon
-    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock\\custom_mail_icon.tga")  -- Use a built-in mail icon
+    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock_Dev\\custom_mail_icon.tga")  -- Use a built-in mail icon
     mailIndicator:Hide()  -- Initially hidden
 
     -- Function to update player location
@@ -232,8 +232,24 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    local function removeLeadingZero(timeToConvert)
+        -- Check if timeToConvert starts with "0" and remove it
+        if Use24HourTime then
+            return timeToConvert
+        end
+        timeToConvert = timeToConvert:gsub("^0", "")
+        return timeToConvert
+    end
+
     -- Update the time display immediately
-    timeText:SetText(date(GetTimeFormat()))
+    local time = ""
+    if not Use24HourTime then
+        time = removeLeadingZero(date(GetTimeFormat()))
+    else
+        time = date(GetTimeFormat())
+    end
+
+    timeText:SetText(time)
     -- Function to update mail indicator visibility
     local mailSenders = {}
     local function UpdateMailIndicator()
@@ -252,7 +268,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
-            timeText:SetText(date(GetTimeFormat()))
+            timeText:SetText(time)
             timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
             locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
             locationText:SetShown(ShowLocation)  -- Show or hide location text based on the setting
@@ -386,7 +402,13 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         checkbox:SetChecked(Use24HourTime)
         checkbox:SetScript("OnClick", function(self)
             Use24HourTime = self:GetChecked()
-            timeText:SetText(date(GetTimeFormat()))  -- Update the time display immediately
+
+            if not Use24HourTime then
+                time = removeLeadingZero(date(GetTimeFormat()))
+            else
+                time = date(GetTimeFormat())
+            end
+            timeText:SetText(time)  -- Update the time display immediately
         end)
 
         -- Create text label for checkbox
@@ -733,7 +755,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         elseif button == "RightButton" then
             if IsShiftKeyDown() then
                 Use24HourTime = not Use24HourTime  -- Toggle the time format
-                timeText:SetText(date(GetTimeFormat()))  -- Update the time display immediately
+                timeText:SetText(time)  -- Update the time display immediately
             else
                 if RightClickFunctionality == "Friends" then
                     ToggleFriendsFrame(1)
