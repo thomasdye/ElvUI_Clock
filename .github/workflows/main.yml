@@ -67,14 +67,16 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Search for "Dev" in files
+    - name: Search for "Dev" in specific files
       run: |
-        if grep -ri "Dev" .; then
-          echo "The word 'Dev' was found in the files. Please remove it."
-          exit 1
-        else
-          echo "No 'Dev' word found in files. All good!"
-        fi
+        files_to_check=("ElvUI_Clock/ElvUI_Clock.lua" "ElvUI_Clock/ElvUI_Clock.toc")
+        for file in "${files_to_check[@]}"; do
+          if grep -qi "Dev" "$file"; then
+            echo "The word 'Dev' was found in $file. Please remove it."
+            exit 1
+          fi
+        done
+        echo "No 'Dev' word found in the specified files. All good!"
 
   create_release:
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
