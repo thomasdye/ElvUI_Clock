@@ -872,7 +872,7 @@ end
 
 function TimeDisplayAddon:SetDefaults()
     if Use24HourTime == nil then
-        print('setting use 24 hour time to false')
+        print('setting use 24 hour time is set to false')
         Use24HourTime = false  -- Default to 12-hour format
     end
 
