@@ -872,12 +872,12 @@ end
 
 function TimeDisplayAddon:SetDefaults()
     if Use24HourTime == nil then
-        print('setting use 24 hour time to false')
+        print('Setting use 24 hour time to false')
         Use24HourTime = false  -- Default to 12-hour format
     end
 
     if BorderPosition == nil then
-        print('setting border position to top')
+        print('Setting border position to top')
         BorderPosition = "TOP"  -- Default border position
     end
 
