@@ -161,19 +161,36 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
-    -- Create the text element using ElvUI's FontString function for time
-    local timeTextFontSize = 14
+    -- Set the font sizes for the text elements
+    local dungeonNameFontSize = 12  -- Font size for dungeon name
+    local dungeonDifficultyFontSize = 10  -- Font size for dungeon difficulty
+    local locationTextFontSize = 12 -- Font size for location
+    local coordinatesFontSize = 10  -- Font size for coordinates
+    local timeTextFontSize = 14 -- Font size for time
+
     local timeText = frame:CreateFontString(nil, "OVERLAY")
     timeText:SetPoint("TOP", frame, "TOP", 0, -5)
     timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
 
-    -- Create the text element using ElvUI's FontString function for location
-    local locationTexFontSize = 10
     local locationText = frame:CreateFontString(nil, "OVERLAY")
-    locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 5)
+    locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)  -- Adjusted position
     locationText:SetWidth(WindowWidth or 100)  -- Set the width to match the frame width
-    locationText:SetHeight(30)  -- Set a height to allow for multiple lines
-    locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
+    locationText:FontTemplate(nil, locationTextFontSize, "OUTLINE")
+
+    local coordinatesText = frame:CreateFontString(nil, "OVERLAY")
+    coordinatesText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)  -- Adjusted position
+    coordinatesText:SetWidth((WindowWidth or 100) * 1.5)  -- Increase the width to accommodate more text
+    coordinatesText:FontTemplate(nil, coordinatesFontSize, "OUTLINE")
+
+    local dungeonNameText = frame:CreateFontString(nil, "OVERLAY")
+    dungeonNameText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)  -- Adjusted position
+    dungeonNameText:SetWidth((WindowWidth or 100) * 1.5)  -- Increase the width to accommodate more text
+    dungeonNameText:FontTemplate(nil, dungeonNameFontSize, "OUTLINE")
+
+    local dungeonDifficultyText = frame:CreateFontString(nil, "OVERLAY")
+    dungeonDifficultyText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)  -- Adjusted position
+    dungeonDifficultyText:SetWidth((WindowWidth or 100) * 1.5)  -- Increase the width to accommodate more text
+    dungeonDifficultyText:FontTemplate(nil, dungeonDifficultyFontSize, "OUTLINE")
 
     -- Create the texture element for mail indicator
     mailIndicator = frame:CreateTexture(nil, "OVERLAY")
@@ -182,28 +199,41 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock\\custom_mail_icon.tga")  -- Use a built-in mail icon
     mailIndicator:Hide()  -- Initially hidden
 
-    -- Update the time display immediately
-    timeText:SetText(date(GetTimeFormat()))
-
     -- Function to update player location
     local function UpdateLocation()
-        local mapID = C_Map.GetBestMapForUnit("player")
-        if not mapID then
-            locationText:SetText("Unknown Location")
-            return
+        local inInstance, instanceType = IsInInstance()
+        if inInstance then
+            local instanceName, _, _, difficultyName = GetInstanceInfo()
+            dungeonNameText:SetText(instanceName)
+            dungeonDifficultyText:SetText(difficultyName)
+            locationText:SetText("")
+            coordinatesText:SetText("")
+        else
+            dungeonNameText:SetText("")
+            dungeonDifficultyText:SetText("")
+            local mapID = C_Map.GetBestMapForUnit("player")
+            if not mapID then
+                locationText:SetText("Unknown Location")
+                coordinatesText:SetText("")
+                return
+            end
+        
+            local position = C_Map.GetPlayerMapPosition(mapID, "player")
+            if not position then
+                locationText:SetText("Unknown Location")
+                coordinatesText:SetText("")
+                return
+            end
+        
+            local x, y = position:GetXY()
+            local playerLocation = GetZoneText()
+            locationText:SetText(playerLocation)
+            coordinatesText:SetText(string.format("%.2f, %.2f", x * 100, y * 100))
         end
-    
-        local position = C_Map.GetPlayerMapPosition(mapID, "player")
-        if not position then
-            locationText:SetText("Unknown Location")
-            return
-        end
-    
-        local x, y = position:GetXY()
-        playerLocation = GetZoneText()
-        locationText:SetText(string.format("%s\n%.2f, %.2f", playerLocation, x * 100, y * 100))
     end
 
+    -- Update the time display immediately
+    timeText:SetText(date(GetTimeFormat()))
     -- Function to update mail indicator visibility
     local mailSenders = {}
     local function UpdateMailIndicator()
@@ -226,6 +256,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             timeText:FontTemplate(nil, timeTextFontSize, "OUTLINE")
             locationText:FontTemplate(nil, locationTexFontSize, "OUTLINE")
             locationText:SetShown(ShowLocation)  -- Show or hide location text based on the setting
+            coordinatesText:SetShown(ShowLocation) -- Show or hide coordinates text based on the setting
             UpdateMailIndicator()
             self.timeSinceLastUpdate = 0
         end
