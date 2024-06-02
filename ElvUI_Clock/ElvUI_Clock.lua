@@ -196,7 +196,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     mailIndicator = frame:CreateTexture(nil, "OVERLAY")
     mailIndicator:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
     mailIndicator:SetSize(16, 16)  -- Set the size of the mail icon
-    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock\\custom_mail_icon.tga")  -- Use a built-in mail icon
+    mailIndicator:SetTexture("Interface\\AddOns\\ElvUI_Clock_Dev\\custom_mail_icon.tga")  -- Use a built-in mail icon
     mailIndicator:Hide()  -- Initially hidden
 
     -- Function to update player location
@@ -872,12 +872,12 @@ end
 
 function TimeDisplayAddon:SetDefaults()
     if Use24HourTime == nil then
-        print('setting use 24 hour time to false')
+        print('Setting use 24 hour time to false')
         Use24HourTime = false  -- Default to 12-hour format
     end
 
     if BorderPosition == nil then
-        print('setting border position to top')
+        print('Setting border position to top')
         BorderPosition = "TOP"  -- Default border position
     end
 
