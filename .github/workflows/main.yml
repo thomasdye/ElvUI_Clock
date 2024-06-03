@@ -107,7 +107,8 @@ jobs:
 
     - name: Create ZIP of ElvUI_Clock directory
       run: |
-        zip -r ElvUI_Clock.zip ElvUI_Clock
+        ZIP_NAME="ElvUI_Clock-${{ env.PR_TAG }}.zip"
+        zip -r $ZIP_NAME ElvUI_Clock
 
     - name: Create Draft Release
       id: create_release
@@ -126,8 +127,8 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ElvUI_Clock.zip
-        asset_name: ElvUI_Clock.zip
+        asset_path: ElvUI_Clock-${{ env.PR_TAG }}.zip
+        asset_name: ElvUI_Clock-${{ env.PR_TAG }}.zip
         asset_content_type: application/zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
