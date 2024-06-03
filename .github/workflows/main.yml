@@ -146,3 +146,4 @@ jobs:
                 "displayName": "ElvUI Clock ${{ env.PR_TAG }}",
                 "gameVersions": [ 10977 ]
               };type=application/json' \
+              https://wow.curseforge.com/api/projects/1023158/upload-file
