@@ -105,11 +105,9 @@ jobs:
         echo "## Changes" >> release_notes.md
         echo "- Include any notable changes here." >> release_notes.md
 
-    - name: Upload ElvUI_Clock directory
-      uses: actions/upload-artifact@v3
-      with:
-        name: ElvUI_Clock
-        path: ElvUI_Clock/
+    - name: Create ZIP of ElvUI_Clock directory
+      run: |
+        zip -r ElvUI_Clock.zip ElvUI_Clock
 
     - name: Create Draft Release
       id: create_release
