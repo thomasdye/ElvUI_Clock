@@ -135,11 +135,12 @@ jobs:
 
     - name: Upload to CurseForge
       run: |
+        CHANGELOG=$(cat release_notes.md)
         curl -X POST \
           -H "x-api-token: ${{ secrets.CURSEFORGE_API_KEY }}" \
           -F "file=@ElvUI_Clock-${{ env.PR_TAG }}.zip" \
           -F 'metadata={
-                "changelog": "$(cat release_notes.md)",
+                "changelog": "'"$CHANGELOG"'",
                 "releaseType": "release",
                 "displayName": "ElvUI Clock ${{ env.PR_TAG }}",
                 "gameVersions": [ 10977 ]
