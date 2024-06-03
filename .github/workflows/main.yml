@@ -142,6 +142,6 @@ jobs:
                 "changelog": "$(cat release_notes.md)",
                 "releaseType": "release",
                 "displayName": "ElvUI Clock ${{ env.PR_TAG }}",
-                "gameVersions": [ "4.3.4" ]
+                "gameVersions": [ "4.4.0" ]
               };type=application/json' \
           https://wow.curseforge.com/api/projects/1023158/upload-file
