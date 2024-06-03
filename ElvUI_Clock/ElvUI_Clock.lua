@@ -250,14 +250,15 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     timeText:SetText(time)
     -- Function to update mail indicator visibility
+    local mailTooltipEnabled = true  -- Track mail tooltip state
     local mailSenders = {}
     local function UpdateMailIndicator()
-        if ShowMail and PlayerHasMail then
+        if ShowMail and PlayerHasMail and not inCombat then  -- Hide mail indicator in combat
             mailIndicator:Show()
-            mailSenders = { GetLatestThreeSenders() }  -- Get details of the latest three mail senders
+            mailSenders = { GetLatestThreeSenders() }
         else
             mailIndicator:Hide()
-            mailSenders = {}  -- Clear the senders' names if no mail
+            mailSenders = {}
         end
     end
 
@@ -810,14 +811,16 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Add sender information to the mail indicator tooltip
     mailIndicator:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:ClearLines()
-        GameTooltip:AddLine(HasNewMail() and HAVE_MAIL_FROM or MAIL_LABEL, 1, 1, 1)
-        GameTooltip:AddLine(' ')
-        for _, sender in pairs(mailSenders) do
-            GameTooltip:AddLine(sender)
+        if not inCombat then  -- Only show tooltip if not in combat
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:ClearLines()
+            GameTooltip:AddLine(HasNewMail() and HAVE_MAIL_FROM or MAIL_LABEL, 1, 1, 1)
+            GameTooltip:AddLine(' ')
+            for _, sender in pairs(mailSenders) do
+                GameTooltip:AddLine(sender)
+            end
+            GameTooltip:Show()
         end
-        GameTooltip:Show()
     end)
 
     mailIndicator:SetScript("OnLeave", function(self)
@@ -828,8 +831,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Handle combat state changes
     function TimeDisplayAddon:PLAYER_REGEN_DISABLED()
         inCombat = true
+        mailIndicator:Hide()  -- Hide mail indicator in combat
         if CombatWarning then
-            -- Player has entered combat, change font color to red
             timeText:SetTextColor(1, 0, 0)
         end
         if SettingsWindowOpen then
@@ -841,8 +844,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     function TimeDisplayAddon:PLAYER_REGEN_ENABLED()
         inCombat = false
+        UpdateMailIndicator()  -- Update mail indicator when exiting combat
         if CombatWarning then
-            -- Player has exited combat, change font color to white
             timeText:SetTextColor(1, 1, 1)
         end
         if wasSettingsWindowOpen then
