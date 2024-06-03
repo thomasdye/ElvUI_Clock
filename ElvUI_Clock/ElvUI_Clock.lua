@@ -262,12 +262,22 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    local function UpdateTimeDisplay()
+        local time = ""
+        if not Use24HourTime then
+            time = removeLeadingZero(date(GetTimeFormat()))
+        else
+            time = date(GetTimeFormat())
+        end
+        timeText:SetText(time)
+    end
+
     -- Update the time, location, and mail indicator every second
     local frameCounter = 0
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
-            timeText:SetText(time)
+            UpdateTimeDisplay()
             timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
             locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
             locationText:SetShown(ShowLocation)
@@ -867,7 +877,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Initial location and mail indicator update
     UpdateLocation()
-    UpdateMailIndicator() 
+    UpdateMailIndicator()
+    UpdateTimeDisplay()
 end
 
 function TimeDisplayAddon:SetDefaults()

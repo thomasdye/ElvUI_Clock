@@ -100,10 +100,11 @@ jobs:
     - name: Generate Release Notes
       id: generate_release_notes
       run: |
+        PR_BODY="${{ github.event.pull_request.body }}"
         echo "Generating release notes for version ${{ env.PR_TAG }}" > release_notes.md
         echo "" >> release_notes.md
         echo "## Changes" >> release_notes.md
-        echo "- Include any notable changes here." >> release_notes.md
+        echo "$PR_BODY" >> release_notes.md
 
     - name: Create ZIP of ElvUI_Clock directory
       run: |
@@ -145,4 +146,3 @@ jobs:
                 "displayName": "ElvUI Clock ${{ env.PR_TAG }}",
                 "gameVersions": [ 10977 ]
               };type=application/json' \
-          https://wow.curseforge.com/api/projects/1023158/upload-file
