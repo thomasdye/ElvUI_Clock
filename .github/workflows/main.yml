@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - release
+      - dev
     types: [opened, edited, closed]
 
 jobs:
@@ -55,6 +56,27 @@ jobs:
         else
           echo "Version number is valid. DEV_VERSION ($DEV_VERSION) > RELEASE_VERSION ($RELEASE_VERSION)"
         fi
+
+  check-dev-word:
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Search for "Dev" in specific files
+      run: |
+        files_to_check=("ElvUI_Clock/ElvUI_Clock.lua" "ElvUI_Clock/ElvUI_Clock.toc")
+        for file in "${files_to_check[@]}"; do
+          if grep -qi "Dev" "$file"; then
+            echo "The word 'Dev' was found in $file. Please remove it."
+            exit 1
+          fi
+        done
+        echo "No 'Dev' word found in the specified files. All good!"
 
   create_release:
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
