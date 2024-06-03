@@ -138,5 +138,10 @@ jobs:
         curl -X POST \
           -H "x-api-token: ${{ secrets.CURSEFORGE_API_KEY }}" \
           -F "file=@ElvUI_Clock-${{ env.PR_TAG }}.zip" \
-          -F "metadata={\"changelog\":\"$(cat release_notes.md)\",\"releaseType\":\"release\",\"displayName\":\"${{ env.PR_TAG }}\"};type=application/json" \
-          https://minecraft.curseforge.com/api/projects/1023158/upload-file
+          -F 'metadata={
+                "changelog": "$(cat release_notes.md)",
+                "releaseType": "release",
+                "displayName": "ElvUI Clock ${{ env.PR_TAG }}",
+                "gameVersions": [ "4.4.0" ]
+              };type=application/json' \
+          https://wow.curseforge.com/api/projects/1023158/upload-file
