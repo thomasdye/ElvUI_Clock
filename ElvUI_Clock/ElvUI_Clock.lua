@@ -300,7 +300,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     end
 
     -- Function to create a new window displaying current settings
-    local function CreateSettingsWindow()
+    local function OpenSettingsWindow()
         if inCombat then
             print("Cannot open settings window while in combat.")
             return
@@ -710,7 +710,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                 CycleBorderPosition()
             elseif IsControlKeyDown() then
                 if not SettingsWindowOpen then
-                    CreateSettingsWindow()
+                    OpenSettingsWindow()
                 end
             else
                 if LeftClickFunctionality == "Friends" then
@@ -846,7 +846,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             timeText:SetTextColor(1, 1, 1)
         end
         if wasSettingsWindowOpen then
-            CreateSettingsWindow()
+            OpenSettingsWindow()
             wasSettingsWindowOpen = false
         end
     end
