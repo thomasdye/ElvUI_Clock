@@ -340,7 +340,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        SettingsFrame:SetSize(250, 500)
+        SettingsFrame:SetSize(250, 475)
         SettingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
