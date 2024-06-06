@@ -9,7 +9,6 @@
 
 [![Trello Badge](https://img.shields.io/badge/Trello-ElvUI_Clock-blue?style=for-the-badge&logo=Trello)](https://trello.com/b/5T4puGNj/elvui-clock)
 
-
 # ElvUI Clock
 A simple but feature packed clock for ElvUI
 
@@ -55,6 +54,20 @@ A simple but feature packed clock for ElvUI
 - **Version Display:**
   - Shows the addon version in the tooltips and settings window.
 
+## Usage
+
+1. **Install the Addon:**
+   - Download the latest release from the [Releases](https://github.com/thomasdye/ElvUI_Clock/releases) page.
+   - Extract the `ElvUI_Clock` folder downloaded from the zip file into your WoW Addons directory (e.g., `World of Warcraft\_classic_\Interface\AddOns`).
+
+2. **In-Game Configuration:**
+   - **Access Settings:** Ctrl + left-click on the time display window to open the settings window.
+   - **Adjust Time Format:** Shift + right-click to toggle between 12-hour and 24-hour formats.
+   - **Change Border Position:** Shift + left-click to cycle through the border positions.
+   - **Customize Window:** Use the settings window to adjust window size, lock/unlock the window, and customize border color and position.
+   - **Set Click Functionalities:** Configure the actions for left-click and right-click in the settings window.
+   - **Enable/Disable Features:** Toggle date display, mail indicator, and combat warning through the settings window.
+
 ## Screenshots
 
 **Main Window**
@@ -72,4 +85,3 @@ A simple but feature packed clock for ElvUI
 **Tooltip**
 
 ![Tooltip](screenshot_tooltip.png)
-
