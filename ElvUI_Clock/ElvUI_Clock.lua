@@ -855,7 +855,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Add sender information to the mail indicator tooltip
     mailIndicator:SetScript("OnEnter", function(self)
         if not inCombat then  -- Only show tooltip if not in combat
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 10, 0)  -- Move 10 pixels to the right
             GameTooltip:ClearLines()
             GameTooltip:AddLine(HasNewMail() and HAVE_MAIL_FROM or MAIL_LABEL, 1, 1, 1)
             GameTooltip:AddLine(' ')
