@@ -17,17 +17,24 @@ end)
 local inCombat = false  -- Track combat state
 local mailIndicator = nil  -- Texture element for mail indicator
 
+local function PrintMessage(message)
+    local addonName = "ElvUI Clock"
+    local colorCode = "|cff00ff00"  -- Green color code
+    local resetCode = "|r"          -- Reset code to return to normal font color
+    print(colorCode .. addonName .. resetCode .. ": " .. message)
+end
+
 function TimeDisplayAddon:PLAYER_LOGIN()
     self:SetDefaults()
 
     -- Initialize ElvUI
     if not IsAddOnLoaded("ElvUI") then
-        print("ElvUI is not loaded.")
+        PrintMessage("ElvUI is not loaded.")
         return
     end
 
     local E, C, L, DB = unpack(ElvUI)
-    print("ElvUI initialized:", E, C, L, DB)
+    PrintMessage("ElvUI initialized", E, C, L, DB)
 
     local classColor = E:ClassColor(E.myclass, true)
 
@@ -328,12 +335,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to create a new window displaying current settings
     local function OpenSettingsWindow()
         if inCombat then
-            print("Cannot open settings window while in combat.")
-            return
-        end
-
-        if SettingsWindowOpen then
-            print("Settings window is already open.")
+            PrintMessage("Cannot open settings window while in combat.")
             return
         end
 
@@ -914,12 +916,12 @@ end
 
 function TimeDisplayAddon:SetDefaults()
     if Use24HourTime == nil then
-        print('setting use 24 hour time to false')
+        PrintMessage('setting use 24 hour time to false')
         Use24HourTime = false  -- Default to 12-hour format
     end
 
     if BorderPosition == nil then
-        print('setting border position to top')
+        PrintMessage('setting border position to top')
         BorderPosition = "TOP"  -- Default border position
     end
 
@@ -932,27 +934,27 @@ function TimeDisplayAddon:SetDefaults()
     end
 
     if ColorChoice == nil then
-        print('setting color choice to class color')
+        PrintMessage('setting color choice to class color')
         ColorChoice = "Class Color"
     end
 
     if LeftClickFunctionality == nil then
-        print('setting left click functionality to calendar')
+        PrintMessage('setting left click functionality to calendar')
         LeftClickFunctionality = "Calendar"
     end
 
     if RightClickFunctionality == nil then
-        print('setting right click functionality to stopwatch')
+        PrintMessage('setting right click functionality to stopwatch')
         RightClickFunctionality = "Stopwatch"
     end
 
     if WindowWidth == nil or WindowWidth < 100 then
-        print('setting window width to 100')
+        PrintMessage('setting window width to 100')
         WindowWidth = 100  -- Default window width
     end
 
     if WindowHeight == nil then
-        print('setting window height to 25')
+        PrintMessage('setting window height to 25')
         WindowHeight = 25  -- Default window height
     end
 
