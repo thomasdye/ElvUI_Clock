@@ -4,12 +4,11 @@ on:
   pull_request:
     branches:
       - release
-      - dev
     types: [opened, edited, closed]
 
 jobs:
   check-pr-name:
-    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'edited')
+    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'edited') && github.event.pull_request.base.ref == 'release' && github.event.pull_request.head.ref == 'dev'
     runs-on: ubuntu-latest
 
     steps:
@@ -18,17 +17,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Check if PR is from dev to release
-      id: check-branches
-      run: |
-        if [[ "${{ github.event.pull_request.base.ref }}" == "release" && "${{ github.event.pull_request.head.ref }}" == "dev" ]]; then
-          echo "branches_matched=true" >> $GITHUB_ENV
-        else
-          echo "branches_matched=false" >> $GITHUB_ENV
-        fi
-
     - name: Validate PR title
-      if: env.branches_matched == 'true'
       run: |
         PR_TITLE="${{ github.event.pull_request.title }}"
         if [[ ! "$PR_TITLE" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -39,7 +28,6 @@ jobs:
         fi
 
     - name: Compare version numbers
-      if: env.branches_matched == 'true'
       run: |
         # Extract version from dev branch
         DEV_VERSION=$(git show origin/dev:ElvUI_Clock/ElvUI_Clock.toc | grep -E '^## Version' | awk '{print $3}')
