@@ -68,7 +68,7 @@ jobs:
         echo "No 'Dev' word found in the specified files. All good!"
 
   create_release:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release' && github.event.pull_request.head.ref == 'dev'
     runs-on: ubuntu-latest
 
     steps:
