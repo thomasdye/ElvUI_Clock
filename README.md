@@ -54,7 +54,9 @@ A simple but feature packed clock for ElvUI
 
 - **Version Display:**
   - Shows the addon version in the tooltips and settings window.
- 
+
+## Screenshots
+
 **Main Window**
 
 ![Main Window](screenshot_clock.png)
