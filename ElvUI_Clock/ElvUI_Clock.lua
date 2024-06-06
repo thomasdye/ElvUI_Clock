@@ -33,7 +33,11 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
-        return WindowHeight + (ShowLocation and 45 or 0)
+        local height = WindowHeight + (ShowLocation and 45 or 0)
+        if ShowDate then
+            height = height + 20  -- Add padding for the date
+        end
+        return height
     end
 
     -- Create the main frame
@@ -171,6 +175,10 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     timeText:SetPoint("TOP", frame, "TOP", 0, -5)
     timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
 
+    local dateText = frame:CreateFontString(nil, "OVERLAY")  -- New date text
+    dateText:SetPoint("TOP", timeText, "BOTTOM", 0, -5)
+    dateText:FontTemplate(nil, 10, "OUTLINE")
+
     local locationText = frame:CreateFontString(nil, "OVERLAY")
     locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)  -- Adjusted position
     locationText:SetWidth(WindowWidth or 100)  -- Set the width to match the frame width
@@ -262,6 +270,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Update the time and date display
     local function UpdateTimeDisplay()
         local time = ""
         if not Use24HourTime then
@@ -270,6 +279,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             time = date(GetTimeFormat())
         end
         timeText:SetText(time)
+
+        if ShowDate then
+            dateText:SetText(date("%m/%d/%y"))
+        else
+            dateText:SetText("")
+        end
     end
 
     -- Update the time, location, and mail indicator every second
@@ -307,7 +322,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to update the frame size based on ShowLocation
     local function UpdateFrameSize()
-        frame:SetHeight(WindowHeight + (ShowLocation and 45 or 0))
+        frame:SetHeight(WindowHeight + (ShowLocation and 45 or 0) + (ShowDate and 20 or 0))
     end
 
     -- Function to create a new window displaying current settings
@@ -420,6 +435,22 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             timeText:SetText(time)  -- Update the time display immediately
         end)
 
+         -- Create checkbox for Show Date
+        local showDateCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        showDateCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -190)
+        showDateCheckbox:SetChecked(ShowDate)
+        showDateCheckbox:SetScript("OnClick", function(self)
+            ShowDate = self:GetChecked()
+            UpdateTimeDisplay()  -- Update the display immediately when toggled
+            UpdateFrameSize()    -- Adjust frame size when ShowDate is toggled
+        end)
+
+        -- Create text label for show date checkbox
+        local showDateCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
+        showDateCheckboxLabel:SetPoint("LEFT", showDateCheckbox, "RIGHT", 5, 0)
+        showDateCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        showDateCheckboxLabel:SetText("Show Date")
+
         -- Create text label for checkbox
         local checkboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
@@ -487,7 +518,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Border Position
         local dropdown = CreateFrame("Frame", "BorderPositionDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -190)
+        dropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -220)
 
         local function OnClick(self)
             UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
@@ -532,7 +563,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -230)
+        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -578,7 +609,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -270)
+        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -622,7 +653,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -310)
+        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -665,7 +696,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -350)
+        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -380)
         sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
@@ -682,7 +713,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -380)
+        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -410)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
@@ -947,5 +978,9 @@ function TimeDisplayAddon:SetDefaults()
 
     if WindowLocked == nil then
         WindowLocked = false  -- Default to window not locked
+    end
+
+    if ShowDate == nil then
+        ShowDate = false  -- Default to show date off
     end
 end
