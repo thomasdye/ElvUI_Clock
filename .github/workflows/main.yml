@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - release
+      - dev
     types: [opened, edited, closed]
 
 jobs:
