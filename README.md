@@ -16,6 +16,9 @@ A simple but feature packed clock for ElvUI
   - Shows the current time in either 12-hour or 24-hour format.
   - Option to toggle between 12-hour and 24-hour formats using a shift + right-click.
 
+- **Date Display:**
+  - Shows the current date.
+
 - **Frame Customization:**
   - Adjustable width and height of the time display window.
   - Draggable and resizable frames.
