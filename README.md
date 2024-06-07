@@ -1,8 +1,11 @@
 ![GitHub Release](https://img.shields.io/github/v/release/thomasdye/ElvUI_Clock?style=for-the-badge&logo=github)
 ![GitHub Release Date](https://img.shields.io/github/release-date/thomasdye/ElvUI_Clock?display_date=published_at&style=for-the-badge&logo=github&color=green)
 
-![GitHub commits since latest release](https://img.shields.io/github/commits-since/thomasdye/ElvUI_Clock/latest?style=for-the-badge&logo=github&color=blue)
+![GitHub commits since latest release (branch)](https://img.shields.io/github/commits-since/thomasdye/ElvUI_Clock/latest/dev?style=for-the-badge&logo=github)
 ![GitHub last commit](https://img.shields.io/github/last-commit/thomasdye/ElvUI_Clock?style=for-the-badge&logo=github&color=green)
+
+![GitHub commit check runs](https://img.shields.io/github/check-runs/thomasdye/ElvUI_Clock/dev?style=for-the-badge&logo=github&color=green)
+
 
 [![CurseForge Version](https://img.shields.io/curseforge/v/1023158?style=for-the-badge&logo=curseforge)](https://www.curseforge.com/wow/addons/elvui-clock)
 [![CurseForge Downloads](https://img.shields.io/curseforge/dt/1023158?style=for-the-badge&logo=curseforge)](https://www.curseforge.com/wow/addons/elvui-clock)
