@@ -49,7 +49,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
-    frame:SetSize(WindowWidth or 100, GetAdjustedHeight())  -- Adjusted height to fit time and location
+    frame:SetSize(WindowWidth or 150, GetAdjustedHeight())  -- Adjusted height to fit time and location
     frame:SetTemplate("Transparent")
 
     -- Set the frame position from saved variables
@@ -197,22 +197,22 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     local locationText = frame:CreateFontString(nil, "OVERLAY")
     locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)  -- Adjusted position
-    locationText:SetWidth(WindowWidth or 100)  -- Set the width to match the frame width
+    locationText:SetWidth(WindowWidth or 150)  -- Set the width to match the frame width
     locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
 
     local coordinatesText = frame:CreateFontString(nil, "OVERLAY")
     coordinatesText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
-    coordinatesText:SetWidth((WindowWidth or 100) * 1.5)
+    coordinatesText:SetWidth((WindowWidth or 150) * 1.5)
     coordinatesText:FontTemplate(nil, coordinatesFontSize, "OUTLINE")
 
     local dungeonNameText = frame:CreateFontString(nil, "OVERLAY")
     dungeonNameText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)
-    dungeonNameText:SetWidth((WindowWidth or 100) * 1.5)
+    dungeonNameText:SetWidth((WindowWidth or 150) * 1.5)
     dungeonNameText:FontTemplate(nil, dungeonNameFontSize, "OUTLINE")
 
     local dungeonDifficultyText = frame:CreateFontString(nil, "OVERLAY")
     dungeonDifficultyText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
-    dungeonDifficultyText:SetWidth((WindowWidth or 100) * 1.5)
+    dungeonDifficultyText:SetWidth((WindowWidth or 150) * 1.5)
     dungeonDifficultyText:FontTemplate(nil, dungeonDifficultyFontSize, "OUTLINE")
 
     -- Create the texture element for mail indicator
@@ -967,8 +967,8 @@ function TimeDisplayAddon:SetDefaults()
     end
 
     if WindowWidth == nil or WindowWidth < 100 then
-        PrintMessage('setting window width to 100')
-        WindowWidth = 100  -- Default window width
+        PrintMessage('setting window width to 150')
+        WindowWidth = 150  -- Default window width
     end
 
     if WindowHeight == nil then
