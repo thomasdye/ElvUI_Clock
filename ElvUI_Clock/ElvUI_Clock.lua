@@ -250,8 +250,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     
             local x, y = position:GetXY()
             local playerLocation = GetZoneText()
-            -- Truncate the location name if it's too long
-            playerLocation = TruncateString(playerLocation, 30)  -- Adjust the maximum length as needed
+            playerLocation = TruncateString(playerLocation, 30)  -- Truncate the location name if it's too long
             locationText:SetText(playerLocation)
             coordinatesText:SetText(string.format("%.2f, %.2f", x * 100, y * 100))
         end
