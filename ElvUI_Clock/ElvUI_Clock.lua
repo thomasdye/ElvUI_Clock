@@ -271,6 +271,10 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         if ShowMail and PlayerHasMail and not inCombat then  -- Hide mail indicator in combat
             mailIndicator:Show()
             mailSenders = { GetLatestThreeSenders() }
+            -- Ensure mailSenders is not nil or empty
+            if not mailSenders or #mailSenders == 0 then
+                mailSenders = { UNKNOWN }
+            end
         else
             mailIndicator:Hide()
             mailSenders = {}
@@ -860,7 +864,11 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:AddLine(HasNewMail() and HAVE_MAIL_FROM or MAIL_LABEL, 1, 1, 1)
             GameTooltip:AddLine(' ')
             for _, sender in pairs(mailSenders) do
-                GameTooltip:AddLine(sender)
+                if sender then
+                    GameTooltip:AddLine(sender)
+                else
+                    GameTooltip:AddLine(UNKNOWN)
+                end
             end
             GameTooltip:Show()
         end
