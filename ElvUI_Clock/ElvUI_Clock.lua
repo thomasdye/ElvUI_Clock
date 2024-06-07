@@ -171,6 +171,15 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Function to truncate long strings
+    local function TruncateString(str, maxLength)
+        if str:len() > maxLength then
+            return str:sub(1, maxLength - 3) .. "..."
+        else
+            return str
+        end
+    end
+
     -- Set the font sizes for the text elements
     local dungeonNameFontSize = 12
     local dungeonDifficultyFontSize = 10
@@ -231,16 +240,17 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                 coordinatesText:SetText("")
                 return
             end
-        
+    
             local position = C_Map.GetPlayerMapPosition(mapID, "player")
             if not position then
                 locationText:SetText("Unknown Location")
                 coordinatesText:SetText("")
                 return
             end
-        
+    
             local x, y = position:GetXY()
             local playerLocation = GetZoneText()
+            playerLocation = TruncateString(playerLocation, 30)  -- Truncate the location name if it's too long
             locationText:SetText(playerLocation)
             coordinatesText:SetText(string.format("%.2f, %.2f", x * 100, y * 100))
         end
