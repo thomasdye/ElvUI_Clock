@@ -180,6 +180,37 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Function to get the color based on the string value
+    local function GetColor(colorName)
+        if colorName == "Class Color" then
+            return classColor.r, classColor.g, classColor.b
+        elseif colorName == "Blue" then
+            return 0, 0, 1
+        elseif colorName == "Red" then
+            return 1, 0, 0
+        elseif colorName == "Green" then
+            return 0, 1, 0
+        elseif colorName == "Pink" then
+            return 1, 0, 1
+        elseif colorName == "Cyan" then
+            return 0, 1, 1
+        elseif colorName == "Yellow" then
+            return 1, 1, 0
+        elseif colorName == "Purple" then
+            return 0.5, 0, 0.5
+        elseif colorName == "Orange" then
+            return 1, 0.5, 0
+        elseif colorName == "Black" then
+            return 0, 0, 0
+        elseif colorName == "Grey" then
+            return 0.5, 0.5, 0.5
+        elseif colorName == "White" then
+            return 1, 1, 1
+        else
+            return 1, 1, 1  -- Default to white
+        end
+    end
+
     -- Set the font sizes for the text elements
     local dungeonNameFontSize = 12
     local dungeonDifficultyFontSize = 10
@@ -190,6 +221,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     local timeText = frame:CreateFontString(nil, "OVERLAY")
     timeText:SetPoint("TOP", frame, "TOP", 0, -5)
     timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
+    timeText:SetTextColor(GetColor(TimeColor))  -- Update time color when initializing the frame
 
     local dateText = frame:CreateFontString(nil, "OVERLAY")  -- New date text
     dateText:SetPoint("TOP", timeText, "BOTTOM", 0, -5)
@@ -356,7 +388,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        SettingsFrame:SetSize(250, 475)
+        SettingsFrame:SetSize(250, 510)
         SettingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -710,9 +742,54 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         rightClickDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
         rightClickDropdownLabel:SetText("Right Click")
 
+        -- Create dropdown for Time Color
+        local timeColorDropdown = CreateFrame("Frame", "TimeColorDropdown", SettingsFrame, "UIDropDownMenuTemplate")
+        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -380)
+
+        local function OnTimeColorClick(self)
+            UIDropDownMenu_SetSelectedID(timeColorDropdown, self:GetID())
+            TimeColor = self.value
+            timeText:SetTextColor(GetColor(TimeColor))
+        end
+
+        local function InitializeTimeColorDropdown(self, level)
+            local info = UIDropDownMenu_CreateInfo()
+            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White"}
+
+            for k, v in pairs(colors) do
+                info = UIDropDownMenu_CreateInfo()
+                info.text = v
+                info.value = v
+                info.func = OnTimeColorClick
+                info.checked = (v == TimeColor)
+                UIDropDownMenu_AddButton(info, level)
+            end
+        end
+
+        UIDropDownMenu_Initialize(timeColorDropdown, InitializeTimeColorDropdown)
+        UIDropDownMenu_SetWidth(timeColorDropdown, 100)
+        UIDropDownMenu_SetButtonWidth(timeColorDropdown, 124)
+        UIDropDownMenu_SetSelectedID(timeColorDropdown, 1)
+        UIDropDownMenu_JustifyText(timeColorDropdown, "LEFT")
+
+        -- Set the selected value based on current TimeColor
+        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White"}
+        for i, color in ipairs(colors) do
+            if color == TimeColor then
+                UIDropDownMenu_SetSelectedID(timeColorDropdown, i)
+                break
+            end
+        end
+
+        -- Create text label for time color dropdown
+        local timeColorDropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
+        timeColorDropdownLabel:SetPoint("LEFT", timeColorDropdown, "RIGHT", -7, 0)
+        timeColorDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
+        timeColorDropdownLabel:SetText("Time Color")
+
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -380)
+        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -420)
         sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
@@ -729,7 +806,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -410)
+        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -450)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
@@ -1002,5 +1079,10 @@ function TimeDisplayAddon:SetDefaults()
 
     if ShowDate == nil then
         ShowDate = false  -- Default to show date off
+    end
+
+    if TimeColor == nil then
+        PrintMessage('setting time color to white')
+        TimeColor = "White"  -- Default time color
     end
 end
