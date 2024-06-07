@@ -968,7 +968,7 @@ function TimeDisplayAddon:SetDefaults()
 
     if WindowWidth == nil or WindowWidth < 100 then
         PrintMessage('setting window width to 100')
-        WindowWidth = 100  -- Default window width
+        WindowWidth = 150  -- Default window width
     end
 
     if WindowHeight == nil then
