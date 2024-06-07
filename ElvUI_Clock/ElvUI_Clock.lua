@@ -170,6 +170,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             return "%I:%M %p"
         end
     end
+
     -- Function to truncate long strings
     local function TruncateString(str, maxLength)
         if str:len() > maxLength then
