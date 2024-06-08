@@ -984,7 +984,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         inCombat = false
         UpdateMailIndicator()  -- Update mail indicator when exiting combat
         if CombatWarning then
-            timeText:SetTextColor(1, 1, 1)
+            timeText:SetTextColor(GetColor(TimeColor))
         end
         if wasSettingsWindowOpen then
             OpenSettingsWindow()
