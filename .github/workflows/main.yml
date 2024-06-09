@@ -9,7 +9,7 @@ on:
 
 jobs:
   check-pr-name:
-    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'edited')
+    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'edited') && github.event.pull_request.base.ref == 'release' && github.event.pull_request.head.ref == 'dev'
     runs-on: ubuntu-latest
 
     steps:
@@ -18,17 +18,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Check if PR is from dev to release
-      id: check-branches
-      run: |
-        if [[ "${{ github.event.pull_request.base.ref }}" == "release" && "${{ github.event.pull_request.head.ref }}" == "dev" ]]; then
-          echo "branches_matched=true" >> $GITHUB_ENV
-        else
-          echo "branches_matched=false" >> $GITHUB_ENV
-        fi
-
     - name: Validate PR title
-      if: env.branches_matched == 'true'
       run: |
         PR_TITLE="${{ github.event.pull_request.title }}"
         if [[ ! "$PR_TITLE" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -39,7 +29,6 @@ jobs:
         fi
 
     - name: Compare version numbers
-      if: env.branches_matched == 'true'
       run: |
         # Extract version from dev branch
         DEV_VERSION=$(git show origin/dev:ElvUI_Clock/ElvUI_Clock.toc | grep -E '^## Version' | awk '{print $3}')
@@ -79,7 +68,7 @@ jobs:
         echo "No 'Dev' word found in the specified files. All good!"
 
   create_release:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release' && github.event.pull_request.head.ref == 'dev'
     runs-on: ubuntu-latest
 
     steps:
@@ -100,10 +89,11 @@ jobs:
     - name: Generate Release Notes
       id: generate_release_notes
       run: |
+        PR_BODY="${{ github.event.pull_request.body }}"
         echo "Generating release notes for version ${{ env.PR_TAG }}" > release_notes.md
         echo "" >> release_notes.md
         echo "## Changes" >> release_notes.md
-        echo "- Include any notable changes here." >> release_notes.md
+        echo "$PR_BODY" >> release_notes.md
 
     - name: Create ZIP of ElvUI_Clock directory
       run: |
@@ -145,4 +135,4 @@ jobs:
                 "displayName": "ElvUI Clock ${{ env.PR_TAG }}",
                 "gameVersions": [ 10977 ]
               };type=application/json' \
-          https://wow.curseforge.com/api/projects/1023158/upload-file
+              https://wow.curseforge.com/api/projects/1023158/upload-file
