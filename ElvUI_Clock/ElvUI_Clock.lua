@@ -9,6 +9,10 @@ frame:RegisterEvent("ZONE_CHANGED_INDOORS")   -- Register event for indoor zone 
 frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")  -- Register event for new area change
 frame:RegisterEvent("MAIL_INBOX_UPDATE")      -- Register event for mail inbox update
 frame:RegisterEvent("UPDATE_PENDING_MAIL")    -- Register event for pending mail update
+frame:RegisterEvent("TAXIMAP_OPENED")         -- Register event for opening the taxi map
+frame:RegisterEvent("TAXIMAP_CLOSED")         -- Register event for closing the taxi map
+frame:RegisterEvent("PLAYER_CONTROL_LOST")    -- Register event for starting flying
+frame:RegisterEvent("PLAYER_CONTROL_GAINED")  -- Register event for stopping flying
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
@@ -16,6 +20,8 @@ end)
 
 local inCombat = false  -- Track combat state
 local mailIndicator = nil  -- Texture element for mail indicator
+local flyingFrame = nil   -- Frame for the flying window
+local destinationName = ""  -- Variable to store flight destination name
 
 local function PrintMessage(message)
     local addonName = "ElvUI Clock"
@@ -272,14 +278,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                 coordinatesText:SetText("")
                 return
             end
-    
+
             local position = C_Map.GetPlayerMapPosition(mapID, "player")
             if not position then
                 locationText:SetText("Unknown Location")
                 coordinatesText:SetText("")
                 return
             end
-    
+
             local x, y = position:GetXY()
             local playerLocation = GetZoneText()
             playerLocation = TruncateString(playerLocation, 30)  -- Truncate the location name if it's too long
@@ -377,6 +383,94 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     local function UpdateFrameSize()
         frame:SetHeight(WindowHeight + (ShowLocation and 30 or 0) + (ShowDate and 20 or 0))
     end
+
+    -- Function to create the flying window
+    local function CreateFlyingWindow()
+        flyingFrame = CreateFrame("Frame", "FlyingDisplayFrame", UIParent)
+        flyingFrame:SetSize(WindowWidth or 150, 70)  -- Decrease height
+        flyingFrame:SetTemplate("Transparent")
+
+        flyingFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)
+        flyingFrame:Hide()
+
+        local flyingText = flyingFrame:CreateFontString(nil, "OVERLAY")
+        flyingText:SetPoint("TOP", flyingFrame, "TOP", 0, -5)
+        flyingText:FontTemplate(nil, 14, "OUTLINE")
+        flyingFrame.text = flyingText
+
+        local mainLocationText = flyingFrame:CreateFontString(nil, "OVERLAY")
+        mainLocationText:SetPoint("TOP", flyingText, "BOTTOM", 0, -5)
+        mainLocationText:FontTemplate(nil, 14, "OUTLINE")
+        flyingFrame.mainLocationText = mainLocationText
+
+        local subLocationText = flyingFrame:CreateFontString(nil, "OVERLAY")
+        subLocationText:SetPoint("TOP", mainLocationText, "BOTTOM", 0, -5)
+        subLocationText:FontTemplate(nil, 14, "OUTLINE")
+        flyingFrame.subLocationText = subLocationText
+
+        -- Add the bottom border texture
+        local flyingFrameBottomBorder = flyingFrame:CreateTexture(nil, "OVERLAY")
+        flyingFrameBottomBorder:SetHeight(3)
+        flyingFrameBottomBorder:SetPoint("BOTTOMLEFT", flyingFrame, "BOTTOMLEFT")
+        flyingFrameBottomBorder:SetPoint("BOTTOMRIGHT", flyingFrame, "BOTTOMRIGHT")
+        flyingFrame.bottomBorder = flyingFrameBottomBorder
+
+        return flyingFrame
+    end
+
+    -- Function to update the border color for the flying window
+    local function UpdateFlyingFrameBorderColor()
+        local color = {0, 0, 0, 0}  -- Default transparent color
+        if ColorChoice == "Class Color" then
+            color = {classColor.r, classColor.g, classColor.b, 0.8}
+        elseif ColorChoice == "Blue" then
+            color = {0, 0, 1, 0.8}
+        elseif ColorChoice == "Red" then
+            color = {1, 0, 0, 0.8}
+        elseif ColorChoice == "Green" then
+            color = {0, 1, 0, 0.8}
+        elseif ColorChoice == "Pink" then
+            color = {1, 0, 1, 0.8}
+        elseif ColorChoice == "Cyan" then
+            color = {0, 1, 1, 0.8}
+        elseif ColorChoice == "Yellow" then
+            color = {1, 1, 0, 0.8}
+        elseif ColorChoice == "Purple" then
+            color = {0.5, 0, 0.5, 0.8}
+        elseif ColorChoice == "Orange" then
+            color = {1, 0.5, 0, 0.8}
+        elseif ColorChoice == "Black" then
+            color = {0, 0, 0, 0.8}
+        elseif ColorChoice == "Grey" then
+            color = {0.5, 0.5, 0.5, 0.8}
+        elseif ColorChoice == "White" then
+            color = {1, 1, 1, 0.8}
+        end
+        flyingFrame.bottomBorder:SetColorTexture(unpack(color))
+    end
+
+    -- Function to show the flying window with the destination
+    local function ShowFlyingWindow(destination)
+        if not flyingFrame then
+            CreateFlyingWindow()
+        end
+        flyingFrame:Show()
+        local mainLocation, subLocation = destination:match("^(.-),%s*(.-)$")
+        flyingFrame.text:SetText("Flying To")
+        flyingFrame.mainLocationText:SetText(mainLocation or "")
+        flyingFrame.subLocationText:SetText(subLocation or "")
+        UpdateFlyingFrameBorderColor()
+    end
+
+    -- Function to hide the flying window
+    local function HideFlyingWindow()
+        if flyingFrame then
+            flyingFrame:Hide()
+        end
+    end
+
+    -- Create the flying window
+    CreateFlyingWindow()
 
     -- Function to create a new window displaying current settings
     local function OpenSettingsWindow()
@@ -1008,6 +1102,27 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     function TimeDisplayAddon:UPDATE_PENDING_MAIL()
         PlayerHasMail = HasNewMail()
         UpdateMailIndicator()
+    end
+
+    -- Handle taxi events
+    function TimeDisplayAddon:TAXIMAP_OPENED()
+        local numNodes = NumTaxiNodes()
+        for i = 1, numNodes do
+            if TaxiNodeGetType(i) == "REACHABLE" then
+                local button = _G["TaxiButton" .. i]
+                button:HookScript("OnClick", function()
+                    destinationName = TaxiNodeName(i)
+                end)
+            end
+        end
+    end
+
+    function TimeDisplayAddon:PLAYER_CONTROL_LOST()
+        ShowFlyingWindow(destinationName)
+    end
+
+    function TimeDisplayAddon:PLAYER_CONTROL_GAINED()
+        HideFlyingWindow()
     end
 
     -- Initial location and mail indicator update
