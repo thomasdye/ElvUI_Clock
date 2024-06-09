@@ -878,7 +878,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                     -- Do nothing
                 else
                     if not IsAddOnLoaded("Blizzard_Calendar") then
-                        UIParentLoadAddOn("Blizzard_Calendar")
+                        LoadAddOn("Blizzard_Calendar")
                     end
                     if Calendar_Toggle then
                         Calendar_Toggle()
@@ -888,7 +888,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         elseif button == "RightButton" then
             if IsShiftKeyDown() then
                 Use24HourTime = not Use24HourTime  -- Toggle the time format
-                timeText:SetText(time)  -- Update the time display immediately
+                UpdateTimeDisplay()  -- Update the time display immediately
             else
                 if RightClickFunctionality == "Friends" then
                     ToggleFriendsFrame(1)
@@ -914,10 +914,17 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                     ToggleStoreUI()
                 elseif RightClickFunctionality == "Stopwatch" then
                     Stopwatch_Toggle()
-                elseif LeftClickFunctionality == "Map" then
+                elseif RightClickFunctionality == "Map" then
                     ToggleWorldMap()
                 elseif RightClickFunctionality == "None" then
                     -- Do nothing
+                elseif RightClickFunctionality == "Calendar" then
+                    if not IsAddOnLoaded("Blizzard_Calendar") then
+                        LoadAddOn("Blizzard_Calendar")
+                    end
+                    if Calendar_Toggle then
+                        Calendar_Toggle()
+                    end
                 end
             end
         end
