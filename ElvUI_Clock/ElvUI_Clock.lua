@@ -40,7 +40,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
-        local height = WindowHeight + (ShowLocation and 45 or 0)
+        local height = WindowHeight + (ShowLocation and 30 or 0)
         if ShowDate then
             height = height + 20  -- Add padding for the date
         end
@@ -375,7 +375,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to update the frame size based on ShowLocation
     local function UpdateFrameSize()
-        frame:SetHeight(WindowHeight + (ShowLocation and 45 or 0) + (ShowDate and 20 or 0))
+        frame:SetHeight(WindowHeight + (ShowLocation and 30 or 0) + (ShowDate and 20 or 0))
     end
 
     -- Function to create a new window displaying current settings
@@ -812,7 +812,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         sliderHeight:SetValue(WindowHeight)
         sliderHeight:SetScript("OnValueChanged", function(self, value)
             WindowHeight = value
-            frame:SetHeight(value + (ShowLocation and 45 or 0))  -- Adjust the frame height
+            frame:SetHeight(value + (ShowLocation and 50 or 0))  -- Adjust the frame height
         end)
 
         -- Create text label for height slider
