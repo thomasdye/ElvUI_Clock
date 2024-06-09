@@ -1139,7 +1139,7 @@ function TimeDisplayAddon:SetDefaults()
 
     if BorderPosition == nil then
         PrintMessage('setting border position to top')
-        BorderPosition = "TOP"  -- Default border position
+        BorderPosition = "BOTTOM"  -- Default border position
     end
 
     if FramePosition == nil then
