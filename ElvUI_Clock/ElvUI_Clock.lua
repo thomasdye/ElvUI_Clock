@@ -760,7 +760,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeLeftClickDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "None"}
+            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "None"}
 
             for k, v in pairs(options) do
                 info = UIDropDownMenu_CreateInfo()
@@ -779,7 +779,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(leftClickDropdown, "LEFT")
 
         -- Set the selected value based on current LeftClickFunctionality
-        local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "None"}
+        local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "None"}
         for i, option in ipairs(options) do
             if option == LeftClickFunctionality then
                 UIDropDownMenu_SetSelectedID(leftClickDropdown, i)
@@ -804,7 +804,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeRightClickDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "None"}
+            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "None"}
 
             for k, v in pairs(options) do
                 info = UIDropDownMenu_CreateInfo()
@@ -968,6 +968,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                     Stopwatch_Toggle()
                 elseif LeftClickFunctionality == "Map" then
                     ToggleWorldMap()
+                elseif LeftClickFunctionality == "Professions" then
+                    ToggleSpellBook("professions")
                 elseif LeftClickFunctionality == "None" then
                     -- Do nothing
                 else
@@ -1010,6 +1012,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                     Stopwatch_Toggle()
                 elseif RightClickFunctionality == "Map" then
                     ToggleWorldMap()
+                elseif LeftClickFunctionality == "Professions" then -- Added handling for "Professions"
+                    ToggleSpellBook("professions")
                 elseif RightClickFunctionality == "None" then
                     -- Do nothing
                 elseif RightClickFunctionality == "Calendar" then
