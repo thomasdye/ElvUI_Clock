@@ -1003,8 +1003,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsFrame:Show()
     end
 
-    -- Left-click to perform selected functionality, shift + left-click to toggle border position
-    -- Right-click to perform selected functionality, shift + right-click to toggle time format
+    -- Left-click to perform selected functionality
+    -- Right-click to perform selected functionality
     -- Ctrl + left-click to open the settings window
     frame:SetScript("OnMouseDown", function(self, button)
         if button == "LeftButton" then
@@ -1063,51 +1063,46 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                 end
             end
         elseif button == "RightButton" then
-            if IsShiftKeyDown() then
-                Use24HourTime = not Use24HourTime  -- Toggle the time format
-                UpdateTimeDisplay()  -- Update the time display immediately
-            else
-                if RightClickFunctionality == "Friends" then
-                    ToggleFriendsFrame(1)
-                elseif RightClickFunctionality == "Character" then
-                    ToggleCharacter("PaperDollFrame")
-                elseif RightClickFunctionality == "Spellbook" then
-                    ToggleSpellBook(BOOKTYPE_SPELL)
-                elseif RightClickFunctionality == "Talents" then
-                    ToggleTalentFrame()
-                elseif RightClickFunctionality == "Achievements" then
-                    ToggleAchievementFrame()
-                elseif RightClickFunctionality == "Quests" then
-                    ToggleQuestLog()
-                elseif RightClickFunctionality == "Guild" then
-                    ToggleGuildFrame()
-                elseif RightClickFunctionality == "Dungeon Finder" then
-                    PVEFrame_ToggleFrame()
-                elseif RightClickFunctionality == "Raid Finder" then
-                    ToggleRaidFrame()
-                elseif RightClickFunctionality == "Collections" then
-                    ToggleCollectionsJournal()
-                elseif RightClickFunctionality == "Shop" then
-                    ToggleStoreUI()
-                elseif RightClickFunctionality == "Stopwatch" then
-                    Stopwatch_Toggle()
-                elseif RightClickFunctionality == "Map" then
-                    ToggleWorldMap()
-                elseif RightClickFunctionality == "Professions" then -- Added handling for "Professions"
-                    ToggleSpellBook("professions")
-                elseif RightClickFunctionality == "Mount Journal" then
-                    ToggleCollectionsJournal(1)
-                elseif RightClickFunctionality == "Pet Journal" then
-                    ToggleCollectionsJournal(2)
-                elseif RightClickFunctionality == "None" then
-                    -- Do nothing
-                elseif RightClickFunctionality == "Calendar" then
-                    if not IsAddOnLoaded("Blizzard_Calendar") then
-                        LoadAddOn("Blizzard_Calendar")
-                    end
-                    if Calendar_Toggle then
-                        Calendar_Toggle()
-                    end
+            if RightClickFunctionality == "Friends" then
+                ToggleFriendsFrame(1)
+            elseif RightClickFunctionality == "Character" then
+                ToggleCharacter("PaperDollFrame")
+            elseif RightClickFunctionality == "Spellbook" then
+                ToggleSpellBook(BOOKTYPE_SPELL)
+            elseif RightClickFunctionality == "Talents" then
+                ToggleTalentFrame()
+            elseif RightClickFunctionality == "Achievements" then
+                ToggleAchievementFrame()
+            elseif RightClickFunctionality == "Quests" then
+                ToggleQuestLog()
+            elseif RightClickFunctionality == "Guild" then
+                ToggleGuildFrame()
+            elseif RightClickFunctionality == "Dungeon Finder" then
+                PVEFrame_ToggleFrame()
+            elseif RightClickFunctionality == "Raid Finder" then
+                ToggleRaidFrame()
+            elseif RightClickFunctionality == "Collections" then
+                ToggleCollectionsJournal()
+            elseif RightClickFunctionality == "Shop" then
+                ToggleStoreUI()
+            elseif RightClickFunctionality == "Stopwatch" then
+                Stopwatch_Toggle()
+            elseif RightClickFunctionality == "Map" then
+                ToggleWorldMap()
+            elseif RightClickFunctionality == "Professions" then -- Added handling for "Professions"
+                ToggleSpellBook("professions")
+            elseif RightClickFunctionality == "Mount Journal" then
+                ToggleCollectionsJournal(1)
+            elseif RightClickFunctionality == "Pet Journal" then
+                ToggleCollectionsJournal(2)
+            elseif RightClickFunctionality == "None" then
+                -- Do nothing
+            elseif RightClickFunctionality == "Calendar" then
+                if not IsAddOnLoaded("Blizzard_Calendar") then
+                    LoadAddOn("Blizzard_Calendar")
+                end
+                if Calendar_Toggle then
+                    Calendar_Toggle()
                 end
             end
         end
@@ -1120,10 +1115,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
             GameTooltip:AddLine("ElvUI Clock")
             GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
-            GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
             GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
-            GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
             GameTooltip:AddDoubleLine(" ", "Version: " .. addonVersion, nil, nil, nil, 1, 0.8, 0)
             GameTooltip:Show()
         end
