@@ -49,8 +49,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
-        local height = WindowHeight + (ShowLocation and 30 or 0)
-        if ShowDate then
+        local height = WindowHeight + (ShowLocation and 50 or 0)
+        if ShowDate and not ShowLocation then
             height = height + 20  -- Add padding for the date
         end
         return height
@@ -139,37 +139,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to update the border position
     local function UpdateBorderPosition()
         windowBorder:ClearAllPoints()
-        if BorderPosition == "TOP" then
-            windowBorder:SetPoint("TOPLEFT", frame, "TOPLEFT")
-            windowBorder:SetPoint("TOPRIGHT", frame, "TOPRIGHT")
-        elseif BorderPosition == "RIGHT" then
-            windowBorder:SetPoint("TOPRIGHT", frame, "TOPRIGHT")
-            windowBorder:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT")
-        elseif BorderPosition == "BOTTOM" then
-            windowBorder:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT")
-            windowBorder:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT")
-        elseif BorderPosition == "LEFT" then
-            windowBorder:SetPoint("TOPLEFT", frame, "TOPLEFT")
-            windowBorder:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT")
-        end
+        windowBorder:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT")
+        windowBorder:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT")
     end
 
     UpdateBorderColor()
     UpdateBorderPosition()
-
-    -- Function to cycle through border positions
-    local function CycleBorderPosition()
-        if BorderPosition == "TOP" then
-            BorderPosition = "RIGHT"
-        elseif BorderPosition == "RIGHT" then
-            BorderPosition = "BOTTOM"
-        elseif BorderPosition == "BOTTOM" then
-            BorderPosition = "LEFT"
-        elseif BorderPosition == "LEFT" then
-            BorderPosition = "TOP"
-        end
-        UpdateBorderPosition()
-    end
 
     -- Function to get the time format
     local function GetTimeFormat()
@@ -522,7 +497,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to update the frame size based on ShowLocation
     local function UpdateFrameSize()
-        frame:SetHeight(WindowHeight + (ShowLocation and 30 or 0) + (ShowDate and 20 or 0))
+        local height = GetAdjustedHeight()
+        frame:SetHeight(height)
     end
 
     -- Function to create the flying window
@@ -623,7 +599,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        SettingsFrame:SetSize(250, 510)
+        SettingsFrame:SetSize(250, 470)
         SettingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -799,54 +775,9 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         lockCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         lockCheckboxLabel:SetText("Lock Window")
 
-        -- Create dropdown for Border Position
-        local dropdown = CreateFrame("Frame", "BorderPositionDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -220)
-
-        local function OnClick(self)
-            UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
-            BorderPosition = self.value
-            UpdateBorderPosition()
-        end
-
-        local function Initialize(self, level)
-            local info = UIDropDownMenu_CreateInfo()
-            local positions = {"TOP", "RIGHT", "BOTTOM", "LEFT"}
-
-            for k, v in pairs(positions) do
-                info = UIDropDownMenu_CreateInfo()
-                info.text = v
-                info.value = v
-                info.func = OnClick
-                info.checked = (v == BorderPosition)
-                UIDropDownMenu_AddButton(info, level)
-            end
-        end
-
-        UIDropDownMenu_Initialize(dropdown, Initialize)
-        UIDropDownMenu_SetWidth(dropdown, 100)
-        UIDropDownMenu_SetButtonWidth(dropdown, 124)
-        UIDropDownMenu_SetSelectedID(dropdown, 1)
-        UIDropDownMenu_JustifyText(dropdown, "LEFT")
-
-        -- Set the selected value based on current BorderPosition
-        local positions = {"TOP", "RIGHT", "BOTTOM", "LEFT"}
-        for i, pos in ipairs(positions) do
-            if pos == BorderPosition then
-                UIDropDownMenu_SetSelectedID(dropdown, i)
-                break
-            end
-        end
-
-        -- Create text label for dropdown
-        local dropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
-        dropdownLabel:SetPoint("LEFT", dropdown, "RIGHT", -7, 0)
-        dropdownLabel:FontTemplate(nil, 12, "OUTLINE")
-        dropdownLabel:SetText("Border")
-
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
+        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -220)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -892,7 +823,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
+        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -936,7 +867,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
+        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -979,7 +910,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Time Color
         local timeColorDropdown = CreateFrame("Frame", "TimeColorDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -380)
+        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
 
         local function OnTimeColorClick(self)
             UIDropDownMenu_SetSelectedID(timeColorDropdown, self:GetID())
@@ -1024,7 +955,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -420)
+        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -380)
         sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
@@ -1041,13 +972,20 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -450)
+        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -410)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
         sliderHeight:SetScript("OnValueChanged", function(self, value)
             WindowHeight = value
-            frame:SetHeight(value + (ShowLocation and 50 or 0))  -- Adjust the frame height
+            local additionalHeight = 0
+            if ShowLocation then
+                additionalHeight = additionalHeight + 50
+            end
+            if ShowDate and not ShowLocation then
+                additionalHeight = additionalHeight + 20
+            end
+            frame:SetHeight(value + additionalHeight)  -- Adjust the frame height
         end)
 
         -- Create text label for height slider
@@ -1076,9 +1014,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     frame:SetScript("OnMouseUp", function(self, button)
         if button == "LeftButton" and not isDragging then
-            if IsShiftKeyDown() then
-                CycleBorderPosition()
-            elseif IsControlKeyDown() then
+            if IsControlKeyDown() then
                 if not SettingsWindowOpen then
                     OpenSettingsWindow()
                 end
@@ -1298,11 +1234,6 @@ function TimeDisplayAddon:SetDefaults()
     if Use24HourTime == nil then
         PrintMessage('setting use 24 hour time to false')
         Use24HourTime = false  -- Default to 12-hour format
-    end
-
-    if BorderPosition == nil then
-        PrintMessage('setting border position to top')
-        BorderPosition = "BOTTOM"  -- Default border position
     end
 
     if FramePosition == nil then
