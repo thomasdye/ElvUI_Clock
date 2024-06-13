@@ -1016,11 +1016,11 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                     Stopwatch_Toggle()
                 elseif RightClickFunctionality == "Map" then
                     ToggleWorldMap()
-                elseif LeftClickFunctionality == "Professions" then -- Added handling for "Professions"
+                elseif RightClickFunctionality == "Professions" then -- Added handling for "Professions"
                     ToggleSpellBook("professions")
-                elseif LeftClickFunctionality == "Mount Journal" then
+                elseif RightClickFunctionality == "Mount Journal" then
                     ToggleCollectionsJournal(1)
-                elseif LeftClickFunctionality == "Pet Journal" then
+                elseif RightClickFunctionality == "Pet Journal" then
                     ToggleCollectionsJournal(2)
                 elseif RightClickFunctionality == "None" then
                     -- Do nothing
