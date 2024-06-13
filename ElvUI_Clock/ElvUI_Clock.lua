@@ -13,6 +13,8 @@ frame:RegisterEvent("TAXIMAP_OPENED")         -- Register event for opening the 
 frame:RegisterEvent("TAXIMAP_CLOSED")         -- Register event for closing the taxi map
 frame:RegisterEvent("PLAYER_CONTROL_LOST")    -- Register event for starting flying
 frame:RegisterEvent("PLAYER_CONTROL_GAINED")  -- Register event for stopping flying
+frame:RegisterEvent("LFG_UPDATE")             -- Register event for LFG update
+frame:RegisterEvent("LFG_QUEUE_STATUS_UPDATE")-- Register event for LFG queue status update
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
@@ -21,6 +23,7 @@ end)
 local inCombat = false  -- Track combat state
 local mailIndicator = nil  -- Texture element for mail indicator
 local flyingFrame = nil   -- Frame for the flying window
+local queueFrame = nil   -- Frame for the queue time window
 local destinationName = ""  -- Variable to store flight destination name
 
 local function PrintMessage(message)
@@ -329,6 +332,37 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Function to update the border color for the queue time window
+    local function UpdateQueueFrameBorderColor()
+        local color = {0, 0, 0, 0}  -- Default transparent color
+        if ColorChoice == "Class Color" then
+            color = {classColor.r, classColor.g, classColor.b, 0.8}
+        elseif ColorChoice == "Blue" then
+            color = {0, 0, 1, 0.8}
+        elseif ColorChoice == "Red" then
+            color = {1, 0, 0, 0.8}
+        elseif ColorChoice == "Green" then
+            color = {0, 1, 0, 0.8}
+        elseif ColorChoice == "Pink" then
+            color = {1, 0, 1, 0.8}
+        elseif ColorChoice == "Cyan" then
+            color = {0, 1, 1, 0.8}
+        elseif ColorChoice == "Yellow" then
+            color = {1, 1, 0, 0.8}
+        elseif ColorChoice == "Purple" then
+            color = {0.5, 0, 0.5, 0.8}
+        elseif ColorChoice == "Orange" then
+            color = {1, 0.5, 0, 0.8}
+        elseif ColorChoice == "Black" then
+            color = {0, 0, 0, 0.8}
+        elseif ColorChoice == "Grey" then
+            color = {0.5, 0.5, 0.5, 0.8}
+        elseif ColorChoice == "White" then
+            color = {1, 1, 1, 0.8}
+        end
+        queueFrame.bottomBorder:SetColorTexture(unpack(color))
+    end
+
     -- Update the time and date display
     local function UpdateTimeDisplay()
         local time = ""
@@ -346,12 +380,119 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Function to create the queue time window
+    local function CreateQueueWindow()
+        queueFrame = CreateFrame("Frame", "QueueDisplayFrame", UIParent)
+        queueFrame:SetSize(WindowWidth or 150, 70)
+        queueFrame:SetTemplate("Transparent")
+
+        -- Check if the flyingFrame is shown, and adjust the position of the queueFrame
+        if flyingFrame and flyingFrame:IsShown() then
+            queueFrame:SetPoint("TOP", frame, "BOTTOM", 0, -75)
+        else
+            queueFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)  -- Default position
+        end
+
+        queueFrame:Hide()
+
+        local instanceTypeText = queueFrame:CreateFontString(nil, "OVERLAY")
+        instanceTypeText:SetPoint("TOP", queueFrame, "TOP", 0, -10)
+        instanceTypeText:FontTemplate(nil, 13, "OUTLINE")
+        queueFrame.instanceTypeText = instanceTypeText
+
+        local queueTimeText = queueFrame:CreateFontString(nil, "OVERLAY")
+        queueTimeText:SetPoint("TOP", instanceTypeText, "BOTTOM", 0, -5)
+        queueTimeText:FontTemplate(nil, 12, "OUTLINE")
+        queueFrame.queueTimeText = queueTimeText
+
+        local avgQueueTimeText = queueFrame:CreateFontString(nil, "OVERLAY")
+        avgQueueTimeText:SetPoint("TOP", queueTimeText, "BOTTOM", 0, -5)
+        avgQueueTimeText:FontTemplate(nil, 12, "OUTLINE")
+        queueFrame.avgQueueTimeText = avgQueueTimeText
+
+        -- Add the bottom border texture
+        local queueFrameBottomBorder = queueFrame:CreateTexture(nil, "OVERLAY")
+        queueFrameBottomBorder:SetHeight(3)
+        queueFrameBottomBorder:SetPoint("BOTTOMLEFT", queueFrame, "BOTTOMLEFT")
+        queueFrameBottomBorder:SetPoint("BOTTOMRIGHT", queueFrame, "BOTTOMRIGHT")
+        queueFrame.bottomBorder = queueFrameBottomBorder
+
+        -- Enable mouse interaction for queueFrame
+        queueFrame:EnableMouse(true)
+        queueFrame:SetScript("OnMouseUp", function(self, button)
+            if button == "LeftButton" then
+                PVEFrame_ToggleFrame()  -- Open the dungeon finder window
+            end
+        end)
+
+        return queueFrame
+    end
+
+    -- Create the queue time window
+    CreateQueueWindow()
+
+    -- Function to show the queue time window
+    local function ShowQueueWindow()
+        if not queueFrame then
+            CreateQueueWindow()
+        end
+
+        -- Re-check the position when showing the window
+        if flyingFrame and flyingFrame:IsShown() then
+            queueFrame:ClearAllPoints()
+            queueFrame:SetPoint("TOP", frame, "BOTTOM", 0, -70)
+        else
+            queueFrame:ClearAllPoints()
+            queueFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)
+        end
+
+        queueFrame:Show()
+        UpdateQueueFrameBorderColor()
+    end
+
+    -- Function to hide the queue time window
+    local function HideQueueWindow()
+        if queueFrame then
+            queueFrame:Hide()
+        end
+    end
+
+    local function FormatTime(seconds)
+        local minutes = floor(seconds / 60)
+        local remainingSeconds = seconds % 60
+        if minutes > 0 then
+            return string.format("%dm %ds", minutes, remainingSeconds)
+        else
+            return string.format("%ds", remainingSeconds)
+        end
+    end
+
+    -- Add variables for storing queue time
+    local currentQueuedTime = 0
+
+    -- Function to update the queue times
+    local function UpdateQueueTimes()
+        local inQueue, leaderNeeds, tankNeeds, healerNeeds, dpsNeeds, totalTanks, totalHealers, totalDPS, instanceType, 
+        instanceSubType, instanceName, averageWait, tankWait, healerWait, dpsWait, myWait, queuedTime = GetLFGQueueStats(1)
+        if inQueue then
+            currentQueuedTime = GetTime() - queuedTime  -- Set the start time of the queue
+            queueFrame.instanceTypeText:SetTextColor(GetColor(TimeColor))
+            queueFrame.instanceTypeText:SetText(instanceName)
+            queueFrame.queueTimeText:SetText("Time in Queue: " .. FormatTime(currentQueuedTime))
+            queueFrame.avgQueueTimeText:SetText("Avg Queue Time: " .. FormatTime(averageWait))
+            ShowQueueWindow()
+        else
+            HideQueueWindow()
+        end
+    end
+
     -- Update the time, location, and mail indicator every second
     local frameCounter = 0
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
             UpdateTimeDisplay()
+            UpdateQueueTimes()
             timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
             locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
             locationText:SetShown(ShowLocation)
@@ -1137,10 +1278,20 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         HideFlyingWindow()
     end
 
+    -- Handle LFG events
+    function TimeDisplayAddon:LFG_UPDATE()
+        UpdateQueueTimes()
+    end
+
+    function TimeDisplayAddon:LFG_QUEUE_STATUS_UPDATE()
+        UpdateQueueTimes()
+    end
+
     -- Initial location and mail indicator update
     UpdateLocation()
     UpdateMailIndicator()
     UpdateTimeDisplay()
+    UpdateQueueTimes()
 end
 
 function TimeDisplayAddon:SetDefaults()
