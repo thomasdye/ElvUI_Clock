@@ -13,6 +13,8 @@ frame:RegisterEvent("TAXIMAP_OPENED")         -- Register event for opening the 
 frame:RegisterEvent("TAXIMAP_CLOSED")         -- Register event for closing the taxi map
 frame:RegisterEvent("PLAYER_CONTROL_LOST")    -- Register event for starting flying
 frame:RegisterEvent("PLAYER_CONTROL_GAINED")  -- Register event for stopping flying
+frame:RegisterEvent("LFG_UPDATE")             -- Register event for LFG update
+frame:RegisterEvent("LFG_QUEUE_STATUS_UPDATE")-- Register event for LFG queue status update
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
@@ -21,6 +23,7 @@ end)
 local inCombat = false  -- Track combat state
 local mailIndicator = nil  -- Texture element for mail indicator
 local flyingFrame = nil   -- Frame for the flying window
+local queueFrame = nil   -- Frame for the queue time window
 local destinationName = ""  -- Variable to store flight destination name
 
 local function PrintMessage(message)
@@ -46,8 +49,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
-        local height = WindowHeight + (ShowLocation and 30 or 0)
-        if ShowDate then
+        local height = WindowHeight + (ShowLocation and 50 or 0)
+        if ShowDate and not ShowLocation then
             height = height + 20  -- Add padding for the date
         end
         return height
@@ -136,37 +139,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to update the border position
     local function UpdateBorderPosition()
         windowBorder:ClearAllPoints()
-        if BorderPosition == "TOP" then
-            windowBorder:SetPoint("TOPLEFT", frame, "TOPLEFT")
-            windowBorder:SetPoint("TOPRIGHT", frame, "TOPRIGHT")
-        elseif BorderPosition == "RIGHT" then
-            windowBorder:SetPoint("TOPRIGHT", frame, "TOPRIGHT")
-            windowBorder:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT")
-        elseif BorderPosition == "BOTTOM" then
-            windowBorder:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT")
-            windowBorder:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT")
-        elseif BorderPosition == "LEFT" then
-            windowBorder:SetPoint("TOPLEFT", frame, "TOPLEFT")
-            windowBorder:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT")
-        end
+        windowBorder:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT")
+        windowBorder:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT")
     end
 
     UpdateBorderColor()
     UpdateBorderPosition()
-
-    -- Function to cycle through border positions
-    local function CycleBorderPosition()
-        if BorderPosition == "TOP" then
-            BorderPosition = "RIGHT"
-        elseif BorderPosition == "RIGHT" then
-            BorderPosition = "BOTTOM"
-        elseif BorderPosition == "BOTTOM" then
-            BorderPosition = "LEFT"
-        elseif BorderPosition == "LEFT" then
-            BorderPosition = "TOP"
-        end
-        UpdateBorderPosition()
-    end
 
     -- Function to get the time format
     local function GetTimeFormat()
@@ -329,6 +307,37 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Function to update the border color for the queue time window
+    local function UpdateQueueFrameBorderColor()
+        local color = {0, 0, 0, 0}  -- Default transparent color
+        if ColorChoice == "Class Color" then
+            color = {classColor.r, classColor.g, classColor.b, 0.8}
+        elseif ColorChoice == "Blue" then
+            color = {0, 0, 1, 0.8}
+        elseif ColorChoice == "Red" then
+            color = {1, 0, 0, 0.8}
+        elseif ColorChoice == "Green" then
+            color = {0, 1, 0, 0.8}
+        elseif ColorChoice == "Pink" then
+            color = {1, 0, 1, 0.8}
+        elseif ColorChoice == "Cyan" then
+            color = {0, 1, 1, 0.8}
+        elseif ColorChoice == "Yellow" then
+            color = {1, 1, 0, 0.8}
+        elseif ColorChoice == "Purple" then
+            color = {0.5, 0, 0.5, 0.8}
+        elseif ColorChoice == "Orange" then
+            color = {1, 0.5, 0, 0.8}
+        elseif ColorChoice == "Black" then
+            color = {0, 0, 0, 0.8}
+        elseif ColorChoice == "Grey" then
+            color = {0.5, 0.5, 0.5, 0.8}
+        elseif ColorChoice == "White" then
+            color = {1, 1, 1, 0.8}
+        end
+        queueFrame.bottomBorder:SetColorTexture(unpack(color))
+    end
+
     -- Update the time and date display
     local function UpdateTimeDisplay()
         local time = ""
@@ -346,12 +355,119 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    -- Function to create the queue time window
+    local function CreateQueueWindow()
+        queueFrame = CreateFrame("Frame", "QueueDisplayFrame", UIParent)
+        queueFrame:SetSize(WindowWidth or 150, 70)
+        queueFrame:SetTemplate("Transparent")
+
+        -- Check if the flyingFrame is shown, and adjust the position of the queueFrame
+        if flyingFrame and flyingFrame:IsShown() then
+            queueFrame:SetPoint("TOP", frame, "BOTTOM", 0, -75)
+        else
+            queueFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)  -- Default position
+        end
+
+        queueFrame:Hide()
+
+        local instanceTypeText = queueFrame:CreateFontString(nil, "OVERLAY")
+        instanceTypeText:SetPoint("TOP", queueFrame, "TOP", 0, -10)
+        instanceTypeText:FontTemplate(nil, 13, "OUTLINE")
+        queueFrame.instanceTypeText = instanceTypeText
+
+        local queueTimeText = queueFrame:CreateFontString(nil, "OVERLAY")
+        queueTimeText:SetPoint("TOP", instanceTypeText, "BOTTOM", 0, -5)
+        queueTimeText:FontTemplate(nil, 12, "OUTLINE")
+        queueFrame.queueTimeText = queueTimeText
+
+        local avgQueueTimeText = queueFrame:CreateFontString(nil, "OVERLAY")
+        avgQueueTimeText:SetPoint("TOP", queueTimeText, "BOTTOM", 0, -5)
+        avgQueueTimeText:FontTemplate(nil, 12, "OUTLINE")
+        queueFrame.avgQueueTimeText = avgQueueTimeText
+
+        -- Add the bottom border texture
+        local queueFrameBottomBorder = queueFrame:CreateTexture(nil, "OVERLAY")
+        queueFrameBottomBorder:SetHeight(3)
+        queueFrameBottomBorder:SetPoint("BOTTOMLEFT", queueFrame, "BOTTOMLEFT")
+        queueFrameBottomBorder:SetPoint("BOTTOMRIGHT", queueFrame, "BOTTOMRIGHT")
+        queueFrame.bottomBorder = queueFrameBottomBorder
+
+        -- Enable mouse interaction for queueFrame
+        queueFrame:EnableMouse(true)
+        queueFrame:SetScript("OnMouseUp", function(self, button)
+            if button == "LeftButton" then
+                PVEFrame_ToggleFrame()  -- Open the dungeon finder window
+            end
+        end)
+
+        return queueFrame
+    end
+
+    -- Create the queue time window
+    CreateQueueWindow()
+
+    -- Function to show the queue time window
+    local function ShowQueueWindow()
+        if not queueFrame then
+            CreateQueueWindow()
+        end
+
+        -- Re-check the position when showing the window
+        if flyingFrame and flyingFrame:IsShown() then
+            queueFrame:ClearAllPoints()
+            queueFrame:SetPoint("TOP", frame, "BOTTOM", 0, -70)
+        else
+            queueFrame:ClearAllPoints()
+            queueFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)
+        end
+
+        queueFrame:Show()
+        UpdateQueueFrameBorderColor()
+    end
+
+    -- Function to hide the queue time window
+    local function HideQueueWindow()
+        if queueFrame then
+            queueFrame:Hide()
+        end
+    end
+
+    local function FormatTime(seconds)
+        local minutes = floor(seconds / 60)
+        local remainingSeconds = seconds % 60
+        if minutes > 0 then
+            return string.format("%dm %ds", minutes, remainingSeconds)
+        else
+            return string.format("%ds", remainingSeconds)
+        end
+    end
+
+    -- Add variables for storing queue time
+    local currentQueuedTime = 0
+
+    -- Function to update the queue times
+    local function UpdateQueueTimes()
+        local inQueue, leaderNeeds, tankNeeds, healerNeeds, dpsNeeds, totalTanks, totalHealers, totalDPS, instanceType, 
+        instanceSubType, instanceName, averageWait, tankWait, healerWait, dpsWait, myWait, queuedTime = GetLFGQueueStats(1)
+        if inQueue then
+            currentQueuedTime = GetTime() - queuedTime  -- Set the start time of the queue
+            queueFrame.instanceTypeText:SetTextColor(GetColor(TimeColor))
+            queueFrame.instanceTypeText:SetText(instanceName)
+            queueFrame.queueTimeText:SetText("Time in Queue: " .. FormatTime(currentQueuedTime))
+            queueFrame.avgQueueTimeText:SetText("Avg Queue Time: " .. FormatTime(averageWait))
+            ShowQueueWindow()
+        else
+            HideQueueWindow()
+        end
+    end
+
     -- Update the time, location, and mail indicator every second
     local frameCounter = 0
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
         if self.timeSinceLastUpdate >= 1 then
             UpdateTimeDisplay()
+            UpdateQueueTimes()
             timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
             locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
             locationText:SetShown(ShowLocation)
@@ -381,7 +497,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Function to update the frame size based on ShowLocation
     local function UpdateFrameSize()
-        frame:SetHeight(WindowHeight + (ShowLocation and 30 or 0) + (ShowDate and 20 or 0))
+        local height = GetAdjustedHeight()
+        frame:SetHeight(height)
     end
 
     -- Function to create the flying window
@@ -482,7 +599,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        SettingsFrame:SetSize(250, 510)
+        SettingsFrame:SetSize(250, 470)
         SettingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -658,54 +775,9 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         lockCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         lockCheckboxLabel:SetText("Lock Window")
 
-        -- Create dropdown for Border Position
-        local dropdown = CreateFrame("Frame", "BorderPositionDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -220)
-
-        local function OnClick(self)
-            UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
-            BorderPosition = self.value
-            UpdateBorderPosition()
-        end
-
-        local function Initialize(self, level)
-            local info = UIDropDownMenu_CreateInfo()
-            local positions = {"TOP", "RIGHT", "BOTTOM", "LEFT"}
-
-            for k, v in pairs(positions) do
-                info = UIDropDownMenu_CreateInfo()
-                info.text = v
-                info.value = v
-                info.func = OnClick
-                info.checked = (v == BorderPosition)
-                UIDropDownMenu_AddButton(info, level)
-            end
-        end
-
-        UIDropDownMenu_Initialize(dropdown, Initialize)
-        UIDropDownMenu_SetWidth(dropdown, 100)
-        UIDropDownMenu_SetButtonWidth(dropdown, 124)
-        UIDropDownMenu_SetSelectedID(dropdown, 1)
-        UIDropDownMenu_JustifyText(dropdown, "LEFT")
-
-        -- Set the selected value based on current BorderPosition
-        local positions = {"TOP", "RIGHT", "BOTTOM", "LEFT"}
-        for i, pos in ipairs(positions) do
-            if pos == BorderPosition then
-                UIDropDownMenu_SetSelectedID(dropdown, i)
-                break
-            end
-        end
-
-        -- Create text label for dropdown
-        local dropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
-        dropdownLabel:SetPoint("LEFT", dropdown, "RIGHT", -7, 0)
-        dropdownLabel:FontTemplate(nil, 12, "OUTLINE")
-        dropdownLabel:SetText("Border")
-
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
+        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -220)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -751,7 +823,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
+        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -795,7 +867,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
+        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -838,7 +910,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Time Color
         local timeColorDropdown = CreateFrame("Frame", "TimeColorDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -380)
+        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
 
         local function OnTimeColorClick(self)
             UIDropDownMenu_SetSelectedID(timeColorDropdown, self:GetID())
@@ -883,7 +955,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -420)
+        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -380)
         sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
@@ -900,13 +972,20 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -450)
+        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -410)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
         sliderHeight:SetScript("OnValueChanged", function(self, value)
             WindowHeight = value
-            frame:SetHeight(value + (ShowLocation and 50 or 0))  -- Adjust the frame height
+            local additionalHeight = 0
+            if ShowLocation then
+                additionalHeight = additionalHeight + 50
+            end
+            if ShowDate and not ShowLocation then
+                additionalHeight = additionalHeight + 20
+            end
+            frame:SetHeight(value + additionalHeight)  -- Adjust the frame height
         end)
 
         -- Create text label for height slider
@@ -924,8 +1003,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsFrame:Show()
     end
 
-    -- Left-click to perform selected functionality, shift + left-click to toggle border position
-    -- Right-click to perform selected functionality, shift + right-click to toggle time format
+    -- Left-click to perform selected functionality
+    -- Right-click to perform selected functionality
     -- Ctrl + left-click to open the settings window
     frame:SetScript("OnMouseDown", function(self, button)
         if button == "LeftButton" then
@@ -935,9 +1014,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     frame:SetScript("OnMouseUp", function(self, button)
         if button == "LeftButton" and not isDragging then
-            if IsShiftKeyDown() then
-                CycleBorderPosition()
-            elseif IsControlKeyDown() then
+            if IsControlKeyDown() then
                 if not SettingsWindowOpen then
                     OpenSettingsWindow()
                 end
@@ -986,51 +1063,46 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                 end
             end
         elseif button == "RightButton" then
-            if IsShiftKeyDown() then
-                Use24HourTime = not Use24HourTime  -- Toggle the time format
-                UpdateTimeDisplay()  -- Update the time display immediately
-            else
-                if RightClickFunctionality == "Friends" then
-                    ToggleFriendsFrame(1)
-                elseif RightClickFunctionality == "Character" then
-                    ToggleCharacter("PaperDollFrame")
-                elseif RightClickFunctionality == "Spellbook" then
-                    ToggleSpellBook(BOOKTYPE_SPELL)
-                elseif RightClickFunctionality == "Talents" then
-                    ToggleTalentFrame()
-                elseif RightClickFunctionality == "Achievements" then
-                    ToggleAchievementFrame()
-                elseif RightClickFunctionality == "Quests" then
-                    ToggleQuestLog()
-                elseif RightClickFunctionality == "Guild" then
-                    ToggleGuildFrame()
-                elseif RightClickFunctionality == "Dungeon Finder" then
-                    PVEFrame_ToggleFrame()
-                elseif RightClickFunctionality == "Raid Finder" then
-                    ToggleRaidFrame()
-                elseif RightClickFunctionality == "Collections" then
-                    ToggleCollectionsJournal()
-                elseif RightClickFunctionality == "Shop" then
-                    ToggleStoreUI()
-                elseif RightClickFunctionality == "Stopwatch" then
-                    Stopwatch_Toggle()
-                elseif RightClickFunctionality == "Map" then
-                    ToggleWorldMap()
-                elseif LeftClickFunctionality == "Professions" then -- Added handling for "Professions"
-                    ToggleSpellBook("professions")
-                elseif LeftClickFunctionality == "Mount Journal" then
-                    ToggleCollectionsJournal(1)
-                elseif LeftClickFunctionality == "Pet Journal" then
-                    ToggleCollectionsJournal(2)
-                elseif RightClickFunctionality == "None" then
-                    -- Do nothing
-                elseif RightClickFunctionality == "Calendar" then
-                    if not IsAddOnLoaded("Blizzard_Calendar") then
-                        LoadAddOn("Blizzard_Calendar")
-                    end
-                    if Calendar_Toggle then
-                        Calendar_Toggle()
-                    end
+            if RightClickFunctionality == "Friends" then
+                ToggleFriendsFrame(1)
+            elseif RightClickFunctionality == "Character" then
+                ToggleCharacter("PaperDollFrame")
+            elseif RightClickFunctionality == "Spellbook" then
+                ToggleSpellBook(BOOKTYPE_SPELL)
+            elseif RightClickFunctionality == "Talents" then
+                ToggleTalentFrame()
+            elseif RightClickFunctionality == "Achievements" then
+                ToggleAchievementFrame()
+            elseif RightClickFunctionality == "Quests" then
+                ToggleQuestLog()
+            elseif RightClickFunctionality == "Guild" then
+                ToggleGuildFrame()
+            elseif RightClickFunctionality == "Dungeon Finder" then
+                PVEFrame_ToggleFrame()
+            elseif RightClickFunctionality == "Raid Finder" then
+                ToggleRaidFrame()
+            elseif RightClickFunctionality == "Collections" then
+                ToggleCollectionsJournal()
+            elseif RightClickFunctionality == "Shop" then
+                ToggleStoreUI()
+            elseif RightClickFunctionality == "Stopwatch" then
+                Stopwatch_Toggle()
+            elseif RightClickFunctionality == "Map" then
+                ToggleWorldMap()
+            elseif RightClickFunctionality == "Professions" then -- Added handling for "Professions"
+                ToggleSpellBook("professions")
+            elseif RightClickFunctionality == "Mount Journal" then
+                ToggleCollectionsJournal(1)
+            elseif RightClickFunctionality == "Pet Journal" then
+                ToggleCollectionsJournal(2)
+            elseif RightClickFunctionality == "None" then
+                -- Do nothing
+            elseif RightClickFunctionality == "Calendar" then
+                if not IsAddOnLoaded("Blizzard_Calendar") then
+                    LoadAddOn("Blizzard_Calendar")
+                end
+                if Calendar_Toggle then
+                    Calendar_Toggle()
                 end
             end
         end
@@ -1042,11 +1114,9 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -5)
             GameTooltip:SetPoint("TOP", self, "BOTTOM", 0, -10)
             GameTooltip:AddLine("ElvUI Clock")
-            GameTooltip:AddLine("Left-click: Perform Selected Action", 1, 1, 1)
-            GameTooltip:AddLine("Shift + Left-click: Toggle Border Position", 1, 1, 1)
+            GameTooltip:AddLine("Left-click: " .. LeftClickFunctionality, 1, 1, 1)
+            GameTooltip:AddLine("Right-click: " .. RightClickFunctionality, 1, 1, 1)
             GameTooltip:AddLine("Ctrl + Left-click: Show Settings", 1, 1, 1)
-            GameTooltip:AddLine("Right-click: Perform Selected Action or Open Stopwatch", 1, 1, 1)
-            GameTooltip:AddLine("Shift + Right-click: Toggle Time Format", 1, 1, 1)
             GameTooltip:AddDoubleLine(" ", "Version: " .. addonVersion, nil, nil, nil, 1, 0.8, 0)
             GameTooltip:Show()
         end
@@ -1137,21 +1207,26 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         HideFlyingWindow()
     end
 
+    -- Handle LFG events
+    function TimeDisplayAddon:LFG_UPDATE()
+        UpdateQueueTimes()
+    end
+
+    function TimeDisplayAddon:LFG_QUEUE_STATUS_UPDATE()
+        UpdateQueueTimes()
+    end
+
     -- Initial location and mail indicator update
     UpdateLocation()
     UpdateMailIndicator()
     UpdateTimeDisplay()
+    UpdateQueueTimes()
 end
 
 function TimeDisplayAddon:SetDefaults()
     if Use24HourTime == nil then
         PrintMessage('setting use 24 hour time to false')
         Use24HourTime = false  -- Default to 12-hour format
-    end
-
-    if BorderPosition == nil then
-        PrintMessage('setting border position to top')
-        BorderPosition = "BOTTOM"  -- Default border position
     end
 
     if FramePosition == nil then
