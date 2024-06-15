@@ -307,6 +307,48 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    local function UpdateXPDisplay()
+        if TrackingXP then
+            local level = UnitLevel("player")
+            local currentXP = UnitXP("player")
+            local maxXP = UnitXPMax("player")
+            local percentXP = (currentXP / maxXP) * 100
+
+            if not xpLevelText then
+                xpLevelText = frame:CreateFontString(nil, "OVERLAY")
+                xpLevelText:SetPoint("TOPLEFT", frame, "TOPLEFT", 5, -5)
+                xpLevelText:FontTemplate(nil, 12, "OUTLINE")
+            end
+
+            if not xpPercentText then
+                xpPercentText = frame:CreateFontString(nil, "OVERLAY")
+                xpPercentText:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -5, -5)
+                xpPercentText:FontTemplate(nil, 12, "OUTLINE")
+            end
+
+            -- Interpolate color based on XP percentage
+            local r = 1 - (percentXP / 100)
+            local g = 1
+            local b = 1 - (percentXP / 100)
+
+            xpLevelText:SetText("Lvl " .. level)
+            if level ~= 85 then
+                xpPercentText:SetText(string.format("%.1f%%", percentXP))
+            end
+            xpPercentText:SetTextColor(r, g, b)
+
+            xpLevelText:Show()
+            xpPercentText:Show()
+        else
+            if xpLevelText then
+                xpLevelText:Hide()
+            end
+            if xpPercentText then
+                xpPercentText:Hide()
+            end
+        end
+    end
+
     -- Function to update the border color for the queue time window
     local function UpdateQueueFrameBorderColor()
         local color = {0, 0, 0, 0}  -- Default transparent color
@@ -468,11 +510,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         if self.timeSinceLastUpdate >= 1 then
             UpdateTimeDisplay()
             UpdateQueueTimes()
+            UpdateMailIndicator()
+            UpdateXPDisplay()
             timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
             locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
             locationText:SetShown(ShowLocation)
             coordinatesText:SetShown(ShowLocation)
-            UpdateMailIndicator()
             self.timeSinceLastUpdate = 0
         end
         frameCounter = frameCounter + 1
@@ -599,7 +642,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         SettingsWindowOpen = true
 
         SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        SettingsFrame:SetSize(250, 470)
+        SettingsFrame:SetSize(250, 530)
         SettingsFrame:SetTemplate("Transparent")
 
         -- Set the frame position from saved variables
@@ -694,23 +737,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             timeText:SetText(time)  -- Update the time display immediately
         end)
 
-         -- Create checkbox for Show Date
-        local showDateCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
-        showDateCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -190)
-        showDateCheckbox:SetChecked(ShowDate)
-        showDateCheckbox:SetScript("OnClick", function(self)
-            ShowDate = self:GetChecked()
-            UpdateTimeDisplay()  -- Update the display immediately when toggled
-            UpdateFrameSize()    -- Adjust frame size when ShowDate is toggled
-        end)
-
-        -- Create text label for show date checkbox
-        local showDateCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
-        showDateCheckboxLabel:SetPoint("LEFT", showDateCheckbox, "RIGHT", 5, 0)
-        showDateCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
-        showDateCheckboxLabel:SetText("Show Date")
-
-        -- Create text label for checkbox
+        -- Create text label for 24 Hour checkbox
         local checkboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
         checkboxLabel:FontTemplate(nil, 12, "OUTLINE")
@@ -775,9 +802,40 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         lockCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         lockCheckboxLabel:SetText("Lock Window")
 
+        -- Create checkbox for Show Date
+        local showDateCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        showDateCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -190)
+        showDateCheckbox:SetChecked(ShowDate)
+        showDateCheckbox:SetScript("OnClick", function(self)
+            ShowDate = self:GetChecked()
+            UpdateTimeDisplay()  -- Update the display immediately when toggled
+            UpdateFrameSize()    -- Adjust frame size when ShowDate is toggled
+        end)
+
+        -- Create text label for show date checkbox
+        local showDateCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
+        showDateCheckboxLabel:SetPoint("LEFT", showDateCheckbox, "RIGHT", 5, 0)
+        showDateCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        showDateCheckboxLabel:SetText("Show Date")
+
+        -- Create checkbox for Tracking XP
+        local trackingXPCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        trackingXPCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -220)
+        trackingXPCheckbox:SetChecked(TrackingXP)
+        trackingXPCheckbox:SetScript("OnClick", function(self)
+        TrackingXP = self:GetChecked()
+        UpdateXPDisplay()  -- Update display immediately when toggled
+        end)
+
+        -- Create text label for tracking XP checkbox
+        local trackingXPCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
+        trackingXPCheckboxLabel:SetPoint("LEFT", trackingXPCheckbox, "RIGHT", 5, 0)
+        trackingXPCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        trackingXPCheckboxLabel:SetText("Track XP")
+
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -220)
+        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
@@ -823,7 +881,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
+        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -867,7 +925,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
+        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -910,7 +968,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Time Color
         local timeColorDropdown = CreateFrame("Frame", "TimeColorDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
+        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -380)
 
         local function OnTimeColorClick(self)
             UIDropDownMenu_SetSelectedID(timeColorDropdown, self:GetID())
@@ -955,7 +1013,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -380)
+        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -420)
         sliderWidth:SetMinMaxValues(100, 200)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
@@ -972,7 +1030,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -410)
+        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -460)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
@@ -1293,5 +1351,9 @@ function TimeDisplayAddon:SetDefaults()
     if TimeColor == nil then
         PrintMessage('setting time color to white')
         TimeColor = "White"  -- Default time color
+    end
+
+    if TrackingXP == nil then
+        TrackingXP = false  -- Default to XP tracking off
     end
 end
