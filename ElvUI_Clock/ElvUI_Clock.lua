@@ -15,6 +15,7 @@ frame:RegisterEvent("PLAYER_CONTROL_LOST")    -- Register event for starting fly
 frame:RegisterEvent("PLAYER_CONTROL_GAINED")  -- Register event for stopping flying
 frame:RegisterEvent("LFG_UPDATE")             -- Register event for LFG update
 frame:RegisterEvent("LFG_QUEUE_STATUS_UPDATE")-- Register event for LFG queue status update
+frame:RegisterEvent("PLAYER_LEVEL_UP")  -- Register event for player level up
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
@@ -60,7 +61,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
-    frame:SetSize(WindowWidth or 150, GetAdjustedHeight())  -- Adjusted height to fit time and location
+    frame:SetSize(WindowWidth or 175, GetAdjustedHeight())  -- Adjusted height to fit time and location
     frame:SetTemplate("Transparent")
 
     -- Set the frame position from saved variables
@@ -215,23 +216,40 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     local locationText = frame:CreateFontString(nil, "OVERLAY")
     locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)  -- Adjusted position
-    locationText:SetWidth(WindowWidth or 150)  -- Set the width to match the frame width
+    locationText:SetWidth(WindowWidth or 175)  -- Set the width to match the frame width
     locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
 
     local coordinatesText = frame:CreateFontString(nil, "OVERLAY")
     coordinatesText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
-    coordinatesText:SetWidth((WindowWidth or 150) * 1.5)
+    coordinatesText:SetWidth((WindowWidth or 175) * 1.5)
     coordinatesText:FontTemplate(nil, coordinatesFontSize, "OUTLINE")
 
     local dungeonNameText = frame:CreateFontString(nil, "OVERLAY")
     dungeonNameText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)
-    dungeonNameText:SetWidth((WindowWidth or 150) * 1.5)
+    dungeonNameText:SetWidth((WindowWidth or 175) * 1.5)
     dungeonNameText:FontTemplate(nil, dungeonNameFontSize, "OUTLINE")
 
     local dungeonDifficultyText = frame:CreateFontString(nil, "OVERLAY")
     dungeonDifficultyText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
-    dungeonDifficultyText:SetWidth((WindowWidth or 150) * 1.5)
+    dungeonDifficultyText:SetWidth((WindowWidth or 175) * 1.5)
     dungeonDifficultyText:FontTemplate(nil, dungeonDifficultyFontSize, "OUTLINE")
+
+    local levelUpFrame = CreateFrame("Frame", "LevelUpDisplayFrame", UIParent)
+    levelUpFrame:SetSize(WindowWidth or 175, 75)
+    levelUpFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)  -- Position underneat the main window
+    levelUpFrame:SetTemplate("Transparent")
+    levelUpFrame:Hide()  -- Initially hidden
+
+    -- Create the bottom border texture for the levelUpFrame
+    local levelUpFrameBottomBorder = levelUpFrame:CreateTexture(nil, "OVERLAY")
+    levelUpFrameBottomBorder:SetHeight(3)
+    levelUpFrameBottomBorder:SetPoint("BOTTOMLEFT", levelUpFrame, "BOTTOMLEFT")
+    levelUpFrameBottomBorder:SetPoint("BOTTOMRIGHT", levelUpFrame, "BOTTOMRIGHT")
+
+    local levelUpText = levelUpFrame:CreateFontString(nil, "OVERLAY")
+    levelUpText:SetAllPoints(levelUpFrame)
+    levelUpText:FontTemplate(nil, 14, "OUTLINE")
+    levelUpText:SetText("Congratulations on leveling up!")
 
     -- Create the texture element for mail indicator
     mailIndicator = frame:CreateTexture(nil, "OVERLAY")
@@ -382,6 +400,39 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         queueFrame.bottomBorder:SetColorTexture(unpack(color))
     end
 
+    -- Function to update the border color for the levelUpFrame
+    local function UpdateLevelUpFrameBorderColor()
+        local color = {0, 0, 0, 0}  -- Default transparent color
+        if ColorChoice == "Class Color" then
+            color = {classColor.r, classColor.g, classColor.b, 0.8}
+        elseif ColorChoice == "Blue" then
+            color = {0, 0, 1, 0.8}
+        elseif ColorChoice == "Red" then
+            color = {1, 0, 0, 0.8}
+        elseif ColorChoice == "Green" then
+            color = {0, 1, 0, 0.8}
+        elseif ColorChoice == "Pink" then
+            color = {1, 0, 1, 0.8}
+        elseif ColorChoice == "Cyan" then
+            color = {0, 1, 1, 0.8}
+        elseif ColorChoice == "Yellow" then
+            color = {1, 1, 0, 0.8}
+        elseif ColorChoice == "Purple" then
+            color = {0.5, 0, 0.5, 0.8}
+        elseif ColorChoice == "Orange" then
+            color = {1, 0.5, 0, 0.8}
+        elseif ColorChoice == "Black" then
+            color = {0, 0, 0, 0.8}
+        elseif ColorChoice == "Grey" then
+            color = {0.5, 0.5, 0.5, 0.8}
+        elseif ColorChoice == "White" then
+            color = {1, 1, 1, 0.8}
+        end
+        levelUpFrameBottomBorder:SetColorTexture(unpack(color))
+    end
+
+    UpdateLevelUpFrameBorderColor()
+
     -- Update the time and date display
     local function UpdateTimeDisplay()
         local time = ""
@@ -402,7 +453,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to create the queue time window
     local function CreateQueueWindow()
         queueFrame = CreateFrame("Frame", "QueueDisplayFrame", UIParent)
-        queueFrame:SetSize(WindowWidth or 150, 70)
+        queueFrame:SetSize(WindowWidth or 175, 70)
         queueFrame:SetTemplate("Transparent")
 
         -- Check if the flyingFrame is shown, and adjust the position of the queueFrame
@@ -527,6 +578,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end)
 
+    function TimeDisplayAddon:PLAYER_LEVEL_UP(level)
+        levelUpText:SetText("Congratulations on reaching level " .. level .. "!")
+        levelUpFrame:Show()
+        C_Timer.After(10, function() levelUpFrame:Hide() end)  -- Hide the frame after 10 seconds
+    end
+
     -- Update location when the player changes zones
     function TimeDisplayAddon:ZONE_CHANGED()
         UpdateLocation()
@@ -549,7 +606,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to create the flying window
     local function CreateFlyingWindow()
         flyingFrame = CreateFrame("Frame", "FlyingDisplayFrame", UIParent)
-        flyingFrame:SetSize(WindowWidth or 150, 70)  -- Decrease height
+        flyingFrame:SetSize(WindowWidth or 175, 70)  -- Decrease height
         flyingFrame:SetTemplate("Transparent")
 
         flyingFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)
@@ -844,6 +901,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             ColorChoice = self.value
             UpdateBorderColor()
             UpdateSettingsBorderColor()
+            UpdateLevelUpFrameBorderColor()
         end
 
         local function InitializeColorDropdown(self, level)
@@ -1032,6 +1090,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
                 flyingFrame.text:SetWidth(value)
                 flyingFrame.mainLocationText:SetWidth(value)
                 flyingFrame.subLocationText:SetWidth(value)
+            end
+
+            -- Adjust the level up frame width
+            if levelUpFrame then
+                levelUpFrame:SetWidth(value)
+                levelUpText:SetWidth(value)
             end
         end)
 
