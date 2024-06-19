@@ -15,6 +15,7 @@ frame:RegisterEvent("PLAYER_CONTROL_LOST")    -- Register event for starting fly
 frame:RegisterEvent("PLAYER_CONTROL_GAINED")  -- Register event for stopping flying
 frame:RegisterEvent("LFG_UPDATE")             -- Register event for LFG update
 frame:RegisterEvent("LFG_QUEUE_STATUS_UPDATE")-- Register event for LFG queue status update
+frame:RegisterEvent("PLAYER_LEVEL_UP")  -- Register event for player level up
 
 frame:SetScript("OnEvent", function(self, event, ...)
     TimeDisplayAddon[event](TimeDisplayAddon, ...)
@@ -46,6 +47,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     PrintMessage("ElvUI initialized", E, C, L, DB)
 
     local classColor = E:ClassColor(E.myclass, true)
+    local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
+    local functionalityOptions = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "Mount Journal", "Pet Journal", "None"}
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
@@ -58,7 +61,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     -- Create the main frame
     local frame = CreateFrame("Frame", "TimeDisplayFrame", UIParent)
-    frame:SetSize(WindowWidth or 150, GetAdjustedHeight())  -- Adjusted height to fit time and location
+    frame:SetSize(WindowWidth or 175, GetAdjustedHeight())  -- Adjusted height to fit time and location
     frame:SetTemplate("Transparent")
 
     -- Set the frame position from saved variables
@@ -195,6 +198,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    
+
     -- Set the font sizes for the text elements
     local dungeonNameFontSize = 12
     local dungeonDifficultyFontSize = 10
@@ -213,23 +218,40 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     local locationText = frame:CreateFontString(nil, "OVERLAY")
     locationText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)  -- Adjusted position
-    locationText:SetWidth(WindowWidth or 150)  -- Set the width to match the frame width
+    locationText:SetWidth(WindowWidth or 175)  -- Set the width to match the frame width
     locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
 
     local coordinatesText = frame:CreateFontString(nil, "OVERLAY")
     coordinatesText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
-    coordinatesText:SetWidth((WindowWidth or 150) * 1.5)
+    coordinatesText:SetWidth((WindowWidth or 175) * 1.5)
     coordinatesText:FontTemplate(nil, coordinatesFontSize, "OUTLINE")
 
     local dungeonNameText = frame:CreateFontString(nil, "OVERLAY")
     dungeonNameText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 25)
-    dungeonNameText:SetWidth((WindowWidth or 150) * 1.5)
+    dungeonNameText:SetWidth((WindowWidth or 175) * 1.5)
     dungeonNameText:FontTemplate(nil, dungeonNameFontSize, "OUTLINE")
 
     local dungeonDifficultyText = frame:CreateFontString(nil, "OVERLAY")
     dungeonDifficultyText:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
-    dungeonDifficultyText:SetWidth((WindowWidth or 150) * 1.5)
+    dungeonDifficultyText:SetWidth((WindowWidth or 175) * 1.5)
     dungeonDifficultyText:FontTemplate(nil, dungeonDifficultyFontSize, "OUTLINE")
+
+    local levelUpFrame = CreateFrame("Frame", "LevelUpDisplayFrame", UIParent)
+    levelUpFrame:SetSize(WindowWidth or 175, 75)
+    levelUpFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)  -- Position underneat the main window
+    levelUpFrame:SetTemplate("Transparent")
+    levelUpFrame:Hide()  -- Initially hidden
+
+    -- Create the bottom border texture for the levelUpFrame
+    local levelUpFrameBottomBorder = levelUpFrame:CreateTexture(nil, "OVERLAY")
+    levelUpFrameBottomBorder:SetHeight(3)
+    levelUpFrameBottomBorder:SetPoint("BOTTOMLEFT", levelUpFrame, "BOTTOMLEFT")
+    levelUpFrameBottomBorder:SetPoint("BOTTOMRIGHT", levelUpFrame, "BOTTOMRIGHT")
+
+    local levelUpText = levelUpFrame:CreateFontString(nil, "OVERLAY")
+    levelUpText:SetAllPoints(levelUpFrame)
+    levelUpText:FontTemplate(nil, 14, "OUTLINE")
+    levelUpText:SetText("Congratulations on leveling up!")
 
     -- Create the texture element for mail indicator
     mailIndicator = frame:CreateTexture(nil, "OVERLAY")
@@ -272,6 +294,40 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    local function GetRGBForColorChoice(colorChoice)
+        if colorChoice == "Class Color" then
+            if classColor then
+                return classColor.r, classColor.g, classColor.b
+            else
+                return 1, 1, 1  -- Default to white if class color is unavailable
+            end
+        elseif colorChoice == "Blue" then
+            return 0, 0, 1
+        elseif colorChoice == "Red" then
+            return 1, 0, 0
+        elseif colorChoice == "Green" then
+            return 0, 1, 0
+        elseif colorChoice == "Pink" then
+            return 1, 0, 1
+        elseif colorChoice == "Cyan" then
+            return 0, 1, 1
+        elseif colorChoice == "Yellow" then
+            return 1, 1, 0
+        elseif colorChoice == "Purple" then
+            return 0.5, 0, 0.5
+        elseif colorChoice == "Orange" then
+            return 1, 0.5, 0
+        elseif colorChoice == "Black" then
+            return 0, 0, 0
+        elseif colorChoice == "Grey" then
+            return 0.5, 0.5, 0.5
+        elseif colorChoice == "White" then
+            return 1, 1, 1
+        else
+            return 1, 1, 1  -- Default to white if no match
+        end
+    end
+
     -- Check if timeToConvert starts with "0" and remove it if Use24HourTime is false
     local function removeLeadingZero(timeToConvert)
         if Use24HourTime then
@@ -307,6 +363,49 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    local function UpdateXPDisplay()
+        if TrackingXP then
+            local level = UnitLevel("player")
+            local currentXP = UnitXP("player")
+            local maxXP = UnitXPMax("player")
+            local percentXP = (currentXP / maxXP) * 100
+
+            if not xpLevelText then
+                xpLevelText = frame:CreateFontString(nil, "OVERLAY")
+                xpLevelText:SetPoint("TOPLEFT", frame, "TOPLEFT", 5, -5)
+                xpLevelText:FontTemplate(nil, 12, "OUTLINE")
+            end
+
+            if not xpPercentText then
+                xpPercentText = frame:CreateFontString(nil, "OVERLAY")
+                xpPercentText:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -5, -5)
+                xpPercentText:FontTemplate(nil, 12, "OUTLINE")
+            end
+
+            -- Interpolate color based on XP percentage
+            local chosenR, chosenG, chosenB = GetRGBForColorChoice(ColorChoice)
+            local r = 1 - (percentXP / 100) * (1 - chosenR)
+            local g = 1 - (percentXP / 100) * (1 - chosenG)
+            local b = 1 - (percentXP / 100) * (1 - chosenB)
+
+            xpLevelText:SetText("Lvl " .. level)
+            if level ~= 85 then
+                xpPercentText:SetText(string.format("%.1f%%", percentXP))
+            end
+            xpPercentText:SetTextColor(r, g, b)
+
+            xpLevelText:Show()
+            xpPercentText:Show()
+        else
+            if xpLevelText then
+                xpLevelText:Hide()
+            end
+            if xpPercentText then
+                xpPercentText:Hide()
+            end
+        end
+    end
+
     -- Function to update the border color for the queue time window
     local function UpdateQueueFrameBorderColor()
         local color = {0, 0, 0, 0}  -- Default transparent color
@@ -338,6 +437,39 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         queueFrame.bottomBorder:SetColorTexture(unpack(color))
     end
 
+    -- Function to update the border color for the levelUpFrame
+    local function UpdateLevelUpFrameBorderColor()
+        local color = {0, 0, 0, 0}  -- Default transparent color
+        if ColorChoice == "Class Color" then
+            color = {classColor.r, classColor.g, classColor.b, 0.8}
+        elseif ColorChoice == "Blue" then
+            color = {0, 0, 1, 0.8}
+        elseif ColorChoice == "Red" then
+            color = {1, 0, 0, 0.8}
+        elseif ColorChoice == "Green" then
+            color = {0, 1, 0, 0.8}
+        elseif ColorChoice == "Pink" then
+            color = {1, 0, 1, 0.8}
+        elseif ColorChoice == "Cyan" then
+            color = {0, 1, 1, 0.8}
+        elseif ColorChoice == "Yellow" then
+            color = {1, 1, 0, 0.8}
+        elseif ColorChoice == "Purple" then
+            color = {0.5, 0, 0.5, 0.8}
+        elseif ColorChoice == "Orange" then
+            color = {1, 0.5, 0, 0.8}
+        elseif ColorChoice == "Black" then
+            color = {0, 0, 0, 0.8}
+        elseif ColorChoice == "Grey" then
+            color = {0.5, 0.5, 0.5, 0.8}
+        elseif ColorChoice == "White" then
+            color = {1, 1, 1, 0.8}
+        end
+        levelUpFrameBottomBorder:SetColorTexture(unpack(color))
+    end
+
+    UpdateLevelUpFrameBorderColor()
+
     -- Update the time and date display
     local function UpdateTimeDisplay()
         local time = ""
@@ -358,7 +490,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to create the queue time window
     local function CreateQueueWindow()
         queueFrame = CreateFrame("Frame", "QueueDisplayFrame", UIParent)
-        queueFrame:SetSize(WindowWidth or 150, 70)
+        queueFrame:SetSize(WindowWidth or 175, 70)
         queueFrame:SetTemplate("Transparent")
 
         -- Check if the flyingFrame is shown, and adjust the position of the queueFrame
@@ -468,11 +600,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         if self.timeSinceLastUpdate >= 1 then
             UpdateTimeDisplay()
             UpdateQueueTimes()
+            UpdateMailIndicator()
+            UpdateXPDisplay()
             timeText:FontTemplate(nil, timeFontSize, "OUTLINE")
             locationText:FontTemplate(nil, locationFontSize, "OUTLINE")
             locationText:SetShown(ShowLocation)
             coordinatesText:SetShown(ShowLocation)
-            UpdateMailIndicator()
             self.timeSinceLastUpdate = 0
         end
         frameCounter = frameCounter + 1
@@ -481,6 +614,12 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             frameCounter = 0  -- Reset the frame counter
         end
     end)
+
+    function TimeDisplayAddon:PLAYER_LEVEL_UP(level)
+        levelUpText:SetText("Congratulations on reaching level " .. level .. "!")
+        levelUpFrame:Show()
+        C_Timer.After(10, function() levelUpFrame:Hide() end)  -- Hide the frame after 10 seconds
+    end
 
     -- Update location when the player changes zones
     function TimeDisplayAddon:ZONE_CHANGED()
@@ -504,7 +643,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to create the flying window
     local function CreateFlyingWindow()
         flyingFrame = CreateFrame("Frame", "FlyingDisplayFrame", UIParent)
-        flyingFrame:SetSize(WindowWidth or 150, 70)  -- Decrease height
+        flyingFrame:SetSize(WindowWidth or 175, 70)  -- Decrease height
         flyingFrame:SetTemplate("Transparent")
 
         flyingFrame:SetPoint("TOP", frame, "BOTTOM", 0, 0)
@@ -597,10 +736,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
 
         SettingsWindowOpen = true
-
         SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
-        SettingsFrame:SetSize(250, 470)
+        SettingsFrame:SetSize(250, 530)
         SettingsFrame:SetTemplate("Transparent")
+        tinsert(UISpecialFrames, "SettingsFrame")
+
+        SettingsFrame:SetScript("OnHide", function()
+            SettingsWindowOpen = false
+        end)
 
         -- Set the frame position from saved variables
         if SettingsFramePosition then
@@ -694,23 +837,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             timeText:SetText(time)  -- Update the time display immediately
         end)
 
-         -- Create checkbox for Show Date
-        local showDateCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
-        showDateCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -190)
-        showDateCheckbox:SetChecked(ShowDate)
-        showDateCheckbox:SetScript("OnClick", function(self)
-            ShowDate = self:GetChecked()
-            UpdateTimeDisplay()  -- Update the display immediately when toggled
-            UpdateFrameSize()    -- Adjust frame size when ShowDate is toggled
-        end)
-
-        -- Create text label for show date checkbox
-        local showDateCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
-        showDateCheckboxLabel:SetPoint("LEFT", showDateCheckbox, "RIGHT", 5, 0)
-        showDateCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
-        showDateCheckboxLabel:SetText("Show Date")
-
-        -- Create text label for checkbox
+        -- Create text label for 24 Hour checkbox
         local checkboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
         checkboxLabel:FontTemplate(nil, 12, "OUTLINE")
@@ -775,20 +902,51 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         lockCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
         lockCheckboxLabel:SetText("Lock Window")
 
+        -- Create checkbox for Show Date
+        local showDateCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        showDateCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -190)
+        showDateCheckbox:SetChecked(ShowDate)
+        showDateCheckbox:SetScript("OnClick", function(self)
+            ShowDate = self:GetChecked()
+            UpdateTimeDisplay()  -- Update the display immediately when toggled
+            UpdateFrameSize()    -- Adjust frame size when ShowDate is toggled
+        end)
+
+        -- Create text label for show date checkbox
+        local showDateCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
+        showDateCheckboxLabel:SetPoint("LEFT", showDateCheckbox, "RIGHT", 5, 0)
+        showDateCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        showDateCheckboxLabel:SetText("Show Date")
+
+        -- Create checkbox for Tracking XP
+        local trackingXPCheckbox = CreateFrame("CheckButton", nil, SettingsFrame, "ChatConfigCheckButtonTemplate")
+        trackingXPCheckbox:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -220)
+        trackingXPCheckbox:SetChecked(TrackingXP)
+        trackingXPCheckbox:SetScript("OnClick", function(self)
+        TrackingXP = self:GetChecked()
+        UpdateXPDisplay()  -- Update display immediately when toggled
+        end)
+
+        -- Create text label for tracking XP checkbox
+        local trackingXPCheckboxLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
+        trackingXPCheckboxLabel:SetPoint("LEFT", trackingXPCheckbox, "RIGHT", 5, 0)
+        trackingXPCheckboxLabel:FontTemplate(nil, 12, "OUTLINE")
+        trackingXPCheckboxLabel:SetText("Track XP")
+
         -- Create dropdown for Color Choice
         local colorDropdown = CreateFrame("Frame", "ColorChoiceDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -220)
+        colorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
 
         local function OnColorClick(self)
             UIDropDownMenu_SetSelectedID(colorDropdown, self:GetID())
             ColorChoice = self.value
             UpdateBorderColor()
             UpdateSettingsBorderColor()
+            UpdateLevelUpFrameBorderColor()
         end
 
         local function InitializeColorDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
 
             for k, v in pairs(colors) do
                 info = UIDropDownMenu_CreateInfo()
@@ -807,7 +965,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(colorDropdown, "LEFT")
 
         -- Set the selected value based on current ColorChoice
-        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
         for i, color in ipairs(colors) do
             if color == ColorChoice then
                 UIDropDownMenu_SetSelectedID(colorDropdown, i)
@@ -819,11 +976,11 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         local colorDropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         colorDropdownLabel:SetPoint("LEFT", colorDropdown, "RIGHT", -7, 0)
         colorDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
-        colorDropdownLabel:SetText("Color")
+        colorDropdownLabel:SetText("Theme Color")
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -260)
+        leftClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
 
         local function OnLeftClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(leftClickDropdown, self:GetID())
@@ -832,9 +989,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeLeftClickDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "Mount Journal", "Pet Journal", "None"}
 
-            for k, v in pairs(options) do
+            for k, v in pairs(functionalityOptions) do
                 info = UIDropDownMenu_CreateInfo()
                 info.text = v
                 info.value = v
@@ -851,8 +1007,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(leftClickDropdown, "LEFT")
 
         -- Set the selected value based on current LeftClickFunctionality
-        local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "Mount Journal", "Pet Journal", "None"}
-        for i, option in ipairs(options) do
+        for i, option in ipairs(functionalityOptions) do
             if option == LeftClickFunctionality then
                 UIDropDownMenu_SetSelectedID(leftClickDropdown, i)
                 break
@@ -867,7 +1022,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Right Click Functionality
         local rightClickDropdown = CreateFrame("Frame", "RightClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -300)
+        rightClickDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
 
         local function OnRightClickOptionSelected(self)
             UIDropDownMenu_SetSelectedID(rightClickDropdown, self:GetID())
@@ -876,9 +1031,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeRightClickDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "Mount Journal", "Pet Journal", "None"}
 
-            for k, v in pairs(options) do
+            for k, v in pairs(functionalityOptions) do
                 info = UIDropDownMenu_CreateInfo()
                 info.text = v
                 info.value = v
@@ -895,7 +1049,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(rightClickDropdown, "LEFT")
 
         -- Set the selected value based on current RightClickFunctionality
-        for i, option in ipairs(options) do
+        for i, option in ipairs(functionalityOptions) do
             if option == RightClickFunctionality then
                 UIDropDownMenu_SetSelectedID(rightClickDropdown, i)
                 break
@@ -910,7 +1064,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create dropdown for Time Color
         local timeColorDropdown = CreateFrame("Frame", "TimeColorDropdown", SettingsFrame, "UIDropDownMenuTemplate")
-        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -340)
+        timeColorDropdown:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", -9, -380)
 
         local function OnTimeColorClick(self)
             UIDropDownMenu_SetSelectedID(timeColorDropdown, self:GetID())
@@ -920,15 +1074,16 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeTimeColorDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White"}
 
             for k, v in pairs(colors) do
-                info = UIDropDownMenu_CreateInfo()
-                info.text = v
-                info.value = v
-                info.func = OnTimeColorClick
-                info.checked = (v == TimeColor)
-                UIDropDownMenu_AddButton(info, level)
+                if v ~= "None" then  -- Exclude "None" from being added to the dropdown
+                    info = UIDropDownMenu_CreateInfo()
+                    info.text = v
+                    info.value = v
+                    info.func = OnTimeColorClick
+                    info.checked = (v == TimeColor)
+                    UIDropDownMenu_AddButton(info, level)
+                end
             end
         end
 
@@ -939,7 +1094,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(timeColorDropdown, "LEFT")
 
         -- Set the selected value based on current TimeColor
-        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White"}
         for i, color in ipairs(colors) do
             if color == TimeColor then
                 UIDropDownMenu_SetSelectedID(timeColorDropdown, i)
@@ -955,13 +1109,35 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -380)
-        sliderWidth:SetMinMaxValues(100, 200)
+        sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -420)
+        sliderWidth:SetMinMaxValues(175, 250)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
         sliderWidth:SetScript("OnValueChanged", function(self, value)
             WindowWidth = value
-            frame:SetWidth(value)  -- Adjust the frame width
+            frame:SetWidth(value)  -- Adjust the main frame width
+
+            -- Adjust the queue frame width
+            if queueFrame then
+                queueFrame:SetWidth(value)
+                queueFrame.instanceTypeText:SetWidth(value)
+                queueFrame.queueTimeText:SetWidth(value)
+                queueFrame.avgQueueTimeText:SetWidth(value)
+            end
+
+            -- Adjust the flying frame width
+            if flyingFrame then
+                flyingFrame:SetWidth(value)
+                flyingFrame.text:SetWidth(value)
+                flyingFrame.mainLocationText:SetWidth(value)
+                flyingFrame.subLocationText:SetWidth(value)
+            end
+
+            -- Adjust the level up frame width
+            if levelUpFrame then
+                levelUpFrame:SetWidth(value)
+                levelUpText:SetWidth(value)
+            end
         end)
 
         -- Create text label for width slider
@@ -972,7 +1148,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         -- Create slider for Window Height
         local sliderHeight = CreateFrame("Slider", "WindowHeightSlider", SettingsFrame, "OptionsSliderTemplate")
-        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -410)
+        sliderHeight:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -460)
         sliderHeight:SetMinMaxValues(25, 150)
         sliderHeight:SetValueStep(1)
         sliderHeight:SetValue(WindowHeight)
@@ -1252,9 +1428,9 @@ function TimeDisplayAddon:SetDefaults()
         RightClickFunctionality = "Stopwatch"
     end
 
-    if WindowWidth == nil or WindowWidth < 100 then
+    if WindowWidth == nil or WindowWidth < 175 then
         PrintMessage('setting window width to 150')
-        WindowWidth = 150  -- Default window width
+        WindowWidth = 175  -- Default window width
     end
 
     if WindowHeight == nil then
@@ -1293,5 +1469,9 @@ function TimeDisplayAddon:SetDefaults()
     if TimeColor == nil then
         PrintMessage('setting time color to white')
         TimeColor = "White"  -- Default time color
+    end
+
+    if TrackingXP == nil then
+        TrackingXP = false  -- Default to XP tracking off
     end
 end
