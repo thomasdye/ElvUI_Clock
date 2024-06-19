@@ -198,6 +198,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    
+
     -- Set the font sizes for the text elements
     local dungeonNameFontSize = 12
     local dungeonDifficultyFontSize = 10
@@ -699,10 +701,14 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
 
         SettingsWindowOpen = true
-
         SettingsFrame = CreateFrame("Frame", "SettingsFrame", UIParent)
         SettingsFrame:SetSize(250, 530)
         SettingsFrame:SetTemplate("Transparent")
+        tinsert(UISpecialFrames, "SettingsFrame")
+
+        SettingsFrame:SetScript("OnHide", function()
+            SettingsWindowOpen = false
+        end)
 
         -- Set the frame position from saved variables
         if SettingsFramePosition then
