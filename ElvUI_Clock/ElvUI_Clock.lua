@@ -1014,7 +1014,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         -- Create slider for Window Width
         local sliderWidth = CreateFrame("Slider", "WindowWidthSlider", SettingsFrame, "OptionsSliderTemplate")
         sliderWidth:SetPoint("TOPLEFT", SettingsFrame, "TOPLEFT", 10, -420)
-        sliderWidth:SetMinMaxValues(100, 200)
+        sliderWidth:SetMinMaxValues(175, 250)
         sliderWidth:SetValueStep(1)
         sliderWidth:SetValue(WindowWidth)
         sliderWidth:SetScript("OnValueChanged", function(self, value)
@@ -1326,9 +1326,9 @@ function TimeDisplayAddon:SetDefaults()
         RightClickFunctionality = "Stopwatch"
     end
 
-    if WindowWidth == nil or WindowWidth < 100 then
+    if WindowWidth == nil or WindowWidth < 175 then
         PrintMessage('setting window width to 150')
-        WindowWidth = 150  -- Default window width
+        WindowWidth = 175  -- Default window width
     end
 
     if WindowHeight == nil then
