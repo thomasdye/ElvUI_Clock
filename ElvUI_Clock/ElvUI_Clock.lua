@@ -941,7 +941,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         local colorDropdownLabel = SettingsFrame:CreateFontString(nil, "OVERLAY")
         colorDropdownLabel:SetPoint("LEFT", colorDropdown, "RIGHT", -7, 0)
         colorDropdownLabel:FontTemplate(nil, 12, "OUTLINE")
-        colorDropdownLabel:SetText("Color")
+        colorDropdownLabel:SetText("Theme Color")
 
         -- Create dropdown for Left Click Functionality
         local leftClickDropdown = CreateFrame("Frame", "LeftClickDropdown", SettingsFrame, "UIDropDownMenuTemplate")
