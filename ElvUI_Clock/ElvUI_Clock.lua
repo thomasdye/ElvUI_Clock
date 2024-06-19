@@ -47,6 +47,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
     local classColor = E:ClassColor(E.myclass, true)
     local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
+    local functionalityOptions = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "Mount Journal", "Pet Journal", "None"}
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
@@ -889,9 +890,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeLeftClickDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "Mount Journal", "Pet Journal", "None"}
 
-            for k, v in pairs(options) do
+            for k, v in pairs(functionalityOptions) do
                 info = UIDropDownMenu_CreateInfo()
                 info.text = v
                 info.value = v
@@ -908,8 +908,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(leftClickDropdown, "LEFT")
 
         -- Set the selected value based on current LeftClickFunctionality
-        local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "Mount Journal", "Pet Journal", "None"}
-        for i, option in ipairs(options) do
+        for i, option in ipairs(functionalityOptions) do
             if option == LeftClickFunctionality then
                 UIDropDownMenu_SetSelectedID(leftClickDropdown, i)
                 break
@@ -933,9 +932,8 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeRightClickDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local options = {"Calendar", "Friends", "Character", "Spellbook", "Talents", "Achievements", "Quests", "Guild", "Dungeon Finder", "Raid Finder", "Collections", "Shop", "Stopwatch", "Map", "Professions", "Mount Journal", "Pet Journal", "None"}
 
-            for k, v in pairs(options) do
+            for k, v in pairs(functionalityOptions) do
                 info = UIDropDownMenu_CreateInfo()
                 info.text = v
                 info.value = v
@@ -952,7 +950,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(rightClickDropdown, "LEFT")
 
         -- Set the selected value based on current RightClickFunctionality
-        for i, option in ipairs(options) do
+        for i, option in ipairs(functionalityOptions) do
             if option == RightClickFunctionality then
                 UIDropDownMenu_SetSelectedID(rightClickDropdown, i)
                 break
