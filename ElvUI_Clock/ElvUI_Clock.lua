@@ -46,6 +46,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     PrintMessage("ElvUI initialized", E, C, L, DB)
 
     local classColor = E:ClassColor(E.myclass, true)
+    local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
 
     -- Adjust WindowHeight if ShowLocation is true
     local function GetAdjustedHeight()
@@ -846,7 +847,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeColorDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
 
             for k, v in pairs(colors) do
                 info = UIDropDownMenu_CreateInfo()
@@ -865,7 +865,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(colorDropdown, "LEFT")
 
         -- Set the selected value based on current ColorChoice
-        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White", "None"}
         for i, color in ipairs(colors) do
             if color == ColorChoice then
                 UIDropDownMenu_SetSelectedID(colorDropdown, i)
@@ -978,15 +977,16 @@ function TimeDisplayAddon:PLAYER_LOGIN()
 
         local function InitializeTimeColorDropdown(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White"}
 
             for k, v in pairs(colors) do
-                info = UIDropDownMenu_CreateInfo()
-                info.text = v
-                info.value = v
-                info.func = OnTimeColorClick
-                info.checked = (v == TimeColor)
-                UIDropDownMenu_AddButton(info, level)
+                if v ~= "None" then  -- Exclude "None" from being added to the dropdown
+                    info = UIDropDownMenu_CreateInfo()
+                    info.text = v
+                    info.value = v
+                    info.func = OnTimeColorClick
+                    info.checked = (v == TimeColor)
+                    UIDropDownMenu_AddButton(info, level)
+                end
             end
         end
 
@@ -997,7 +997,6 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         UIDropDownMenu_JustifyText(timeColorDropdown, "LEFT")
 
         -- Set the selected value based on current TimeColor
-        local colors = {"Class Color", "Blue", "Red", "Green", "Pink", "Cyan", "Yellow", "Purple", "Orange", "Black", "Grey", "White"}
         for i, color in ipairs(colors) do
             if color == TimeColor then
                 UIDropDownMenu_SetSelectedID(timeColorDropdown, i)
