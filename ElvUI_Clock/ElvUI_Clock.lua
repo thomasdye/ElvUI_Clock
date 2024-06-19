@@ -294,6 +294,40 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         end
     end
 
+    local function GetRGBForColorChoice(colorChoice)
+        if colorChoice == "Class Color" then
+            if classColor then
+                return classColor.r, classColor.g, classColor.b
+            else
+                return 1, 1, 1  -- Default to white if class color is unavailable
+            end
+        elseif colorChoice == "Blue" then
+            return 0, 0, 1
+        elseif colorChoice == "Red" then
+            return 1, 0, 0
+        elseif colorChoice == "Green" then
+            return 0, 1, 0
+        elseif colorChoice == "Pink" then
+            return 1, 0, 1
+        elseif colorChoice == "Cyan" then
+            return 0, 1, 1
+        elseif colorChoice == "Yellow" then
+            return 1, 1, 0
+        elseif colorChoice == "Purple" then
+            return 0.5, 0, 0.5
+        elseif colorChoice == "Orange" then
+            return 1, 0.5, 0
+        elseif colorChoice == "Black" then
+            return 0, 0, 0
+        elseif colorChoice == "Grey" then
+            return 0.5, 0.5, 0.5
+        elseif colorChoice == "White" then
+            return 1, 1, 1
+        else
+            return 1, 1, 1  -- Default to white if no match
+        end
+    end
+
     -- Check if timeToConvert starts with "0" and remove it if Use24HourTime is false
     local function removeLeadingZero(timeToConvert)
         if Use24HourTime then
@@ -349,9 +383,10 @@ function TimeDisplayAddon:PLAYER_LOGIN()
             end
 
             -- Interpolate color based on XP percentage
-            local r = 1 - (percentXP / 100)
-            local g = 1
-            local b = 1 - (percentXP / 100)
+            local chosenR, chosenG, chosenB = GetRGBForColorChoice(ColorChoice)
+            local r = 1 - (percentXP / 100) * (1 - chosenR)
+            local g = 1 - (percentXP / 100) * (1 - chosenG)
+            local b = 1 - (percentXP / 100) * (1 - chosenB)
 
             xpLevelText:SetText("Lvl " .. level)
             if level ~= 85 then
