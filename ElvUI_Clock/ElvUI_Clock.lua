@@ -1019,7 +1019,23 @@ function TimeDisplayAddon:PLAYER_LOGIN()
         sliderWidth:SetValue(WindowWidth)
         sliderWidth:SetScript("OnValueChanged", function(self, value)
             WindowWidth = value
-            frame:SetWidth(value)  -- Adjust the frame width
+            frame:SetWidth(value)  -- Adjust the main frame width
+
+            -- Adjust the queue frame width
+            if queueFrame then
+                queueFrame:SetWidth(value)
+                queueFrame.instanceTypeText:SetWidth(value)
+                queueFrame.queueTimeText:SetWidth(value)
+                queueFrame.avgQueueTimeText:SetWidth(value)
+            end
+
+            -- Adjust the flying frame width
+            if flyingFrame then
+                flyingFrame:SetWidth(value)
+                flyingFrame.text:SetWidth(value)
+                flyingFrame.mainLocationText:SetWidth(value)
+                flyingFrame.subLocationText:SetWidth(value)
+            end
         end)
 
         -- Create text label for width slider
