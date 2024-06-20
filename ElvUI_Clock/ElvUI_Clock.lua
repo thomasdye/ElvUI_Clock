@@ -263,7 +263,7 @@ function TimeDisplayAddon:PLAYER_LOGIN()
     -- Function to update player location
     local function UpdateLocation()
         local inInstance, instanceType = IsInInstance()
-        if inInstance then
+        if inInstance and ShowLocation then
             local instanceName, _, _, difficultyName = GetInstanceInfo()
             dungeonNameText:SetText(instanceName)
             dungeonDifficultyText:SetText(difficultyName)
