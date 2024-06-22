@@ -10,7 +10,6 @@ frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")  -- Register event for new area cha
 frame:RegisterEvent("MAIL_INBOX_UPDATE")      -- Register event for mail inbox update
 frame:RegisterEvent("UPDATE_PENDING_MAIL")    -- Register event for pending mail update
 frame:RegisterEvent("TAXIMAP_OPENED")         -- Register event for opening the taxi map
-frame:RegisterEvent("TAXIMAP_CLOSED")         -- Register event for closing the taxi map
 frame:RegisterEvent("PLAYER_CONTROL_LOST")    -- Register event for starting flying
 frame:RegisterEvent("PLAYER_CONTROL_GAINED")  -- Register event for stopping flying
 frame:RegisterEvent("LFG_UPDATE")             -- Register event for LFG update
